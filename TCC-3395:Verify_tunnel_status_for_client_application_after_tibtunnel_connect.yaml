@@ -93,7 +93,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3395" ]
+        args: ["-c", "timeout 30s ./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3395" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
   - name: checkTunnelStatus
@@ -113,11 +113,9 @@ tasks:
       - name: output
         operator: notContainsStr
         value: "false"
-  
-     
   - name: sleepComm
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["80"]
+        args: ["40"]
