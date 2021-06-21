@@ -1,0 +1,10 @@
+{
+    "timeout": "5s",
+    "http": {
+        "url": "http://router.${NAMESPACE_SYSTEM}.svc.cluster.local:90/infra/accesskeys",
+        "headers":{
+            "X-Atmosphere-For-User": ["qa-user"]
+        },
+        "method": "POST"
+   }
+}

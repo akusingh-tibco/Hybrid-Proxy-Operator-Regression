@@ -1,0 +1,47 @@
+name: suite
+
+setup: 
+
+# TCC - 3386 AccessKeyHash and AccessSecret Generation using intercom operator.
+# deploy client.yaml with test-service
+  - name: deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/client-intercom.yaml"
+        output: "./generated/client-intercom.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/client-intercom.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+# AccessKeyHash and AccessSecretkey generation
+  - name: secretKey_hashKey
+    type: foreground
+    templates:
+      - input: "./resources/intercom-key.json"
+        output: "./generated/intercom-key.json"
+    exec:
+      timeout: 2m
+      http:
+        url: "https://${FQDN_DNS}/qa/intercom-client/exec"
+        method: "POST"
+        payload:
+          fromFile: "./generated/intercom-key.json" 
+        capture:
+          body:
+            - name: accesskey
+              matchType: jsonpath
+              match: "{[?(@.type=='http')].data.accessKeySecret}"
+            - name: accesshash
+              matchType: jsonpath
+              match: "{[?(@.type=='http')].data.accessKeyHash}"
+    expect:
+      - name: status
+        operator: equal
+        value: 200
+
+teardown:

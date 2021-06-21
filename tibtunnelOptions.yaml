@@ -1,0 +1,98 @@
+name: tibtunnelOptions
+
+env: 
+  VERSION_BUILD: version 2.3.1 (build 96)             #change this build and version if changed.
+  PROFILE_NAME: XYZZZZ                                   #can change the profile name to validate.
+
+tasks: 
+
+# TCC - Tibtunnel help Option
+  - name: tibtunnelHelp
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel -h"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "help"
+      - name: output
+        operator: containsStr
+        value: "version"
+      - name: output
+        operator: containsStr
+        value: "Cloud"
+
+# TCC - 3383 Tibtunnel version ---- current version 2.3.1 and build 96
+  - name: tibtunnelVersion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel -v"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${VERSION_BUILD}"   #current version is 2.3.1 and build is 96
+
+# TCC - 3387 Tibtunnel Configure Profile (w/o name: default and with Name)
+  - name: defaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+  
+  - name: withProfileName  
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure --profile ${PROFILE_NAME} -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "profile '${PROFILE_NAME}' was successfully saved"
+
+# TCC - AccessKeySecret Validation 
+  - name: verifyAccessKeySecret_Configured
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}" 
+

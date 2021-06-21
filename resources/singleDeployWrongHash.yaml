@@ -1,0 +1,51 @@
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: ${META_DATA_NAME}
+  namespace: ${NAMESPACE_TENANT}
+spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
+  endpoint:
+    path: /${ENDPOINT}             
+    fqdn: ${FQDN}
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "{PBKDF2-43}40000:wdfgdgfhhgm:wCyFxmH9RA1JcitdpGBiwPmFl3AQi8m2HGJUIo2KiVc"    #here hash is entered wrong manually
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${DEPLOYMENT_NAME}
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app: http                         #introducing a new label-selector bcz in multiple deployment case we can't disinguish b/w the deployments and their pods if not labelled
+    app.kubernetes.io/name: tcp-client
+    app.cloud.tibco.com/owner: local
+spec:
+  selector:
+    matchLabels:
+      app: http 
+      app.kubernetes.io/name: tcp-client
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: http
+        app.kubernetes.io/name: tcp-client
+        app.cloud.tibco.com/owner: local
+        app.cloud.tibco.com/tunnel: enabled
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: container-agent
+          image: ${CONTAINER_AGENT_IMAGE} #can we get this image name directly, rather to check using kctl get cm
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          resources: {}       # TODO: request actual resources here
+        - name: main
+          image: ${CLIENT_CONTAINER} #can we get this image name directly
+          resources: {}       # TODO: request actual resources here
