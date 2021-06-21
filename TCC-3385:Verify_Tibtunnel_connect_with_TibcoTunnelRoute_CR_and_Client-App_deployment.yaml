@@ -99,6 +99,23 @@ tasks:
         cmd: "sleep"
         args: ["15"]
 
+# tibtunnel configuration
+  - name: tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+
 # Tibtunnel Connect
   - name: tibtunnelConnect
     type: background
@@ -106,12 +123,12 @@ tasks:
       script:
         cmd: "/bin/bash"
         args: ["-c", "timeout 40s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3385" ]
-  - name: sleepCommand
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["15"]
+  # - name: sleepCommand
+  #   type: background
+  #   exec:
+  #     script:
+  #       cmd: "sleep"
+  #       args: ["40"]
 
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
@@ -119,7 +136,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "awk '/PING/{print}' /Users/akusingh/Github_Desktop/Hybrid-Proxy-Operator-Regression-/tibtunnelLog-3395"]   
+        args: ["-c", "cat /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression-/tibtunnelLog | grep -E ') PING|) PONG'"]   
         capture:
           stdout:
             - name: output
@@ -239,31 +256,6 @@ tasks:
       count: 5
       until: success
       sleep: 10ms 
-
-# Verify ClientApp Deployments deletion
-  - name: confirm_deletionA
-    type: foreground
-    timeout: 1m
-    exec: 
-      script: 
-        cmd: "kubectl"
-        args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        capture:
-          stdout: 
-            - name: confirm_deleteA
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_deleteA
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-    repeat:
-      count: 5
-      until: success
-      sleep: 10s 
 
 # Verify client-pod deletion
   - name: confirm_client-pod_deletee
