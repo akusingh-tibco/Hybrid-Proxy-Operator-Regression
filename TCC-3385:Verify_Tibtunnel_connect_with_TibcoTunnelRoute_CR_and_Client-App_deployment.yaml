@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 name: TCC-3385
 
 tasks: 
@@ -297,6 +294,3 @@ tasks:
       - name: status
         operator: equal
         value: 0
-=======
->>>>>>> cf1ffb2663b91b1c953eb6bc05491049b557ae6b
->>>>>>> Stashed changes
