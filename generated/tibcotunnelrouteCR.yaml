@@ -1,0 +1,14 @@
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: tcp-client-vs
+  namespace: aws-compute-tibco-tenantx
+spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
+  endpoint:
+    path: /tcp-client2             
+    fqdn: tenantx-tunnel.compute-dev.tcie.pro
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "{PBKDF2-43}40000:R88bpG0Mxl8Ppp261gDRpQ:hezqz1Fc9OboNMxiXYfCR8SzI/g4WPI0J4A7irt0tJA"

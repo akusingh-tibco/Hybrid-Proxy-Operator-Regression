@@ -85,14 +85,43 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 10s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["20"]
+        args: ["25"]
+
+# Tibtunnel logs for PING/PONG
+  - name: tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog | grep -E ') PING|) PONG'"]  
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+      expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: output
+        operator: contains
+        value: "(T<- ) iiiiPONG"
+      - name: output
+        operator: contains
+        value: "................"
+  # - name: sleepComm
+  #   type: foreground
+  #   exec:
+  #     script:
+  #       cmd: "sleep"
+  #       args: ["30"]
 
 teardown: 
 

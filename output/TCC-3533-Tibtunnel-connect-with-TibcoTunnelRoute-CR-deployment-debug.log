@@ -1,0 +1,284 @@
+suite.setup.deploy_yaml_file: Starting task execution
+suite.setup.deploy_yaml_file: Replacing task placeholders (if any)
+suite.setup.deploy_yaml_file: Generating templates...
+suite.setup.deploy_yaml_file: Generating file '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/generated/client-intercom.yaml' from template '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/resources/client-intercom.yaml'
+suite.setup.deploy_yaml_file: Start iteration #0
+suite.setup.deploy_yaml_file: Executing script: 'kubectl apply -f ./generated/client-intercom.yaml'
+suite.setup.deploy_yaml_file: [STDOUT] tibcodeployment.cloud.tibco.com/intercom-client unchanged
+suite.setup.deploy_yaml_file: [STDOUT] service/intercom-client unchanged
+suite.setup.deploy_yaml_file: [STDOUT] tibcoroute.cloud.tibco.com/intercom-client unchanged
+suite.setup.deploy_yaml_file: [STDOUT] tibcointercomrule.cloud.tibco.com/intercom-client unchanged
+suite.setup.deploy_yaml_file: Captured variable: suite.setup.deploy_yaml_file.status=0
+suite.setup.deploy_yaml_file: Validating condition 'status equal 0'
+suite.setup.deploy_yaml_file: Expect condition 'status equal 0' passed
+suite.setup.deploy_yaml_file: [OK] Execution results match all expected results
+suite.setup.deploy_yaml_file: Completed iteration #0 with status: PASS
+===== suite.setup.deploy_yaml_file: PASS in 9.162296833s (1 iterations)
+suite.setup.secretKey_hashKey: Starting task execution
+suite.setup.secretKey_hashKey: Replacing task placeholders (if any)
+suite.setup.secretKey_hashKey: Generating templates...
+suite.setup.secretKey_hashKey: Generating file '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/generated/intercom-key.json' from template '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/resources/intercom-key.json'
+suite.setup.secretKey_hashKey: Start iteration #0
+suite.setup.secretKey_hashKey: Executing http: 'POST https://datascience.compute-dev.tcie.pro/qa/intercom-client/exec'
+suite.setup.secretKey_hashKey[{"type": "http", "data": {"accessKeySecret":"OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU","accessKeyHash":"{PBKDF2-43}40000:R88bpG0Mxl8Ppp261gDRpQ:hezqz1Fc9OboNMxiXYfCR8SzI/g4WPI0J4A7irt0tJA"}},
+suite.setup.secretKey_hashKey{"type": "status", "data": "200"}]
+suite.setup.secretKey_hashKey: Captured variable: suite.setup.secretKey_hashKey.accesskey=OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU
+suite.setup.secretKey_hashKey: Captured variable: suite.setup.secretKey_hashKey.accesshash={PBKDF2-43}40000:R88bpG0Mxl8Ppp261gDRpQ:hezqz1Fc9OboNMxiXYfCR8SzI/g4WPI0J4A7irt0tJA
+suite.setup.secretKey_hashKey: Captured variable: suite.setup.secretKey_hashKey.status=200
+suite.setup.secretKey_hashKey: Validating condition 'status equal 200'
+suite.setup.secretKey_hashKey: Expect condition 'status equal 200' passed
+suite.setup.secretKey_hashKey: [OK] Execution results match all expected results
+suite.setup.secretKey_hashKey: Completed iteration #0 with status: PASS
+===== suite.setup.secretKey_hashKey: PASS in 1.4983288049999999s (1 iterations)
+tibTunnelConfigureDefaultProfile: Starting task execution
+tibTunnelConfigureDefaultProfile: Replacing task placeholders (if any)
+tibTunnelConfigureDefaultProfile: Start iteration #0
+tibTunnelConfigureDefaultProfile: Executing script: '/bin/bash -c ./tibtunnel configure -a OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU'
+tibTunnelConfigureDefaultProfile: [STDOUT] Configuration for profile 'default' was successfully saved
+tibTunnelConfigureDefaultProfile: Captured variable: tibTunnelConfigureDefaultProfile.output=Configuration for profile 'default' was successfully saved
+tibTunnelConfigureDefaultProfile: Captured variable: tibTunnelConfigureDefaultProfile.status=0
+tibTunnelConfigureDefaultProfile: Validating condition 'output containsStr Configuration for profile 'default' was successfully saved'
+tibTunnelConfigureDefaultProfile: Expect condition 'output containsStr Configuration for profile 'default' was successfully saved' passed
+tibTunnelConfigureDefaultProfile: [OK] Execution results match all expected results
+tibTunnelConfigureDefaultProfile: Completed iteration #0 with status: PASS
+===== tibTunnelConfigureDefaultProfile: PASS in 0.016312127s (1 iterations)
+verifyProfileSaved: Starting task execution
+verifyProfileSaved: Replacing task placeholders (if any)
+verifyProfileSaved: Start iteration #0
+verifyProfileSaved: Executing script: '/bin/bash -c cat ~/.tibtunnel/credentials'
+verifyProfileSaved: [STDOUT] [suyog]
+verifyProfileSaved: [STDOUT] accessKey = eBStA5iQQ8OZaPIvZksn5FCoEqkfpa3M2LTa909kPtM
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: [STDOUT] [test]
+verifyProfileSaved: [STDOUT] accessKey = j0v2fMbjekUjrXttVQrViLLW/KJwjIsy4iTSbCs2cTI
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: [STDOUT] [profile1]
+verifyProfileSaved: [STDOUT] accessKey = X/tbExK0SOqNrF3+pcfbMU5XruZhOFnRr0iUIgDeJ+s
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: [STDOUT] [profile2]
+verifyProfileSaved: [STDOUT] accessKey = YEX3oU8NBPLCoQGO/9EEKgI5mMqtKLMcaGbsNmVt3LA
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: [STDOUT] [demo]
+verifyProfileSaved: [STDOUT] accessKey = X/tbExK0SOqNrF3+pcfbMU5XruZhOFnRr0iUIgDeJ+s
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: [STDOUT] [default]
+verifyProfileSaved: [STDOUT] accessKey = OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU
+verifyProfileSaved: [STDOUT] 
+verifyProfileSaved: Captured variable: verifyProfileSaved.output=[suyog]
+accessKey = eBStA5iQQ8OZaPIvZksn5FCoEqkfpa3M2LTa909kPtM
+
+[test]
+accessKey = j0v2fMbjekUjrXttVQrViLLW/KJwjIsy4iTSbCs2cTI
+
+[profile1]
+accessKey = X/tbExK0SOqNrF3+pcfbMU5XruZhOFnRr0iUIgDeJ+s
+
+[profile2]
+accessKey = YEX3oU8NBPLCoQGO/9EEKgI5mMqtKLMcaGbsNmVt3LA
+
+[demo]
+accessKey = X/tbExK0SOqNrF3+pcfbMU5XruZhOFnRr0iUIgDeJ+s
+
+[default]
+accessKey = OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU
+
+verifyProfileSaved: Captured variable: verifyProfileSaved.status=0
+verifyProfileSaved: Validating condition 'output containsStr OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU'
+verifyProfileSaved: Expect condition 'output containsStr OMWgNB8aGx3Ne/eCFW5i4z338rbQUjJjXIcTEC7JAtU' passed
+verifyProfileSaved: [OK] Execution results match all expected results
+verifyProfileSaved: Completed iteration #0 with status: PASS
+===== verifyProfileSaved: PASS in 0.009577092s (1 iterations)
+tibcotunnelroute-status-withFunctions: Starting task execution
+tibcotunnelroute-status-withFunctions: Replacing task placeholders (if any)
+tibcotunnelroute-status-withFunctions: Generating templates...
+tibcotunnelroute-status-withFunctions: Generating file '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/generated/tibcotunnelrouteCR.yaml' from template '/Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/resources/tibcotunnelrouteCR.yaml'
+tibcotunnelroute-status-withFunctions: Start iteration #0
+tibcotunnelroute-status-withFunctions: Executing script: '/Users/sugandhi/Desktop/GITRepository/Hybrid-Proxy-Operator-Regression/resources/common-functions.sh deployResourse ./generated/tibcotunnelrouteCR.yaml'
+tibcotunnelroute-status-withFunctions: [STDOUT] tibcotunnelroute.cloud.tibco.com/tcp-client-vs created
+tibcotunnelroute-status-withFunctions: Captured variable: tibcotunnelroute-status-withFunctions.output=tibcotunnelroute.cloud.tibco.com/tcp-client-vs created
+tibcotunnelroute-status-withFunctions: Captured variable: tibcotunnelroute-status-withFunctions.outerr=
+tibcotunnelroute-status-withFunctions: Captured variable: tibcotunnelroute-status-withFunctions.status=0
+tibcotunnelroute-status-withFunctions: Validating condition 'status equal 0'
+tibcotunnelroute-status-withFunctions: Expect condition 'status equal 0' passed
+tibcotunnelroute-status-withFunctions: [OK] Execution results match all expected results
+tibcotunnelroute-status-withFunctions: Completed iteration #0 with status: PASS
+===== tibcotunnelroute-status-withFunctions: PASS in 7.288675754s (1 iterations)
+tibcotunnelroute-status: Starting task execution
+tibcotunnelroute-status: Replacing task placeholders (if any)
+tibcotunnelroute-status: Start iteration #0
+tibcotunnelroute-status: Executing script: 'kubectl get tibcotunnelroute tcp-client-vs -n aws-compute-tibco-tenantx -o json'
+tibcotunnelroute-status: [STDERR] I0621 18:26:04.114735   20612 request.go:668] Waited for 1.145045718s due to client-side throttling, not priority and fairness, request: GET:https://5BBC3CBFE4A75296A2007C80C8BBC301.gr7.us-west-2.eks.amazonaws.com/apis/coordination.k8s.io/v1?timeout=32s
+tibcotunnelroute-status: [STDOUT] {
+tibcotunnelroute-status: [STDOUT]     "apiVersion": "cloud.tibco.com/v1",
+tibcotunnelroute-status: [STDOUT]     "kind": "TibcoTunnelRoute",
+tibcotunnelroute-status: [STDOUT]     "metadata": {
+tibcotunnelroute-status: [STDOUT]         "annotations": {
+tibcotunnelroute-status: [STDOUT]             "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"cloud.tibco.com/v1\",\"kind\":\"TibcoTunnelRoute\",\"metadata\":{\"annotations\":{},\"name\":\"tcp-client-vs\",\"namespace\":\"aws-compute-tibco-tenantx\"},\"spec\":{\"endpoint\":{\"config\":\"accesskey\",\"configVariables\":{\"ACCESS_KEY_HASH\":\"{PBKDF2-43}40000:R88bpG0Mxl8Ppp261gDRpQ:hezqz1Fc9OboNMxiXYfCR8SzI/g4WPI0J4A7irt0tJA\"},\"fqdn\":\"tenantx-tunnel.compute-dev.tcie.pro\",\"path\":\"/tcp-client2\"},\"selector\":{\"app.kubernetes.io/name\":\"tcp-client\"}}}\n"
+tibcotunnelroute-status: [STDOUT]         },
+tibcotunnelroute-status: [STDOUT]         "creationTimestamp": "2021-06-21T12:55:57Z",
+tibcotunnelroute-status: [STDOUT]         "generation": 1,
+tibcotunnelroute-status: [STDOUT]         "name": "tcp-client-vs",
+tibcotunnelroute-status: [STDOUT]         "namespace": "aws-compute-tibco-tenantx",
+tibcotunnelroute-status: [STDOUT]         "resourceVersion": "241149",
+tibcotunnelroute-status: [STDOUT]         "uid": "dec80e15-3d1f-40c3-bc4b-37da227fdcf2"
+tibcotunnelroute-status: [STDOUT]     },
+tibcotunnelroute-status: [STDOUT]     "spec": {
+tibcotunnelroute-status: [STDOUT]         "endpoint": {
+tibcotunnelroute-status: [STDOUT]             "config": "accesskey",
+tibcotunnelroute-status: [STDOUT]             "configVariables": {
+tibcotunnelroute-status: [STDOUT]                 "ACCESS_KEY_HASH": "{PBKDF2-43}40000:R88bpG0Mxl8Ppp261gDRpQ:hezqz1Fc9OboNMxiXYfCR8SzI/g4WPI0J4A7irt0tJA"
+tibcotunnelroute-status: [STDOUT]             },
+tibcotunnelroute-status: [STDOUT]             "fqdn": "tenantx-tunnel.compute-dev.tcie.pro",
+tibcotunnelroute-status: [STDOUT]             "path": "/tcp-client2"
+tibcotunnelroute-status: [STDOUT]         },
+tibcotunnelroute-status: [STDOUT]         "selector": {
+tibcotunnelroute-status: [STDOUT]             "app.kubernetes.io/name": "tcp-client"
+tibcotunnelroute-status: [STDOUT]         }
+tibcotunnelroute-status: [STDOUT]     },
+tibcotunnelroute-status: [STDOUT]     "status": {
+tibcotunnelroute-status: [STDOUT]         "resource": {
+tibcotunnelroute-status: [STDOUT]             "state": "processed"
+tibcotunnelroute-status: [STDOUT]         }
+tibcotunnelroute-status: [STDOUT]     }
+tibcotunnelroute-status: [STDOUT] }
+tibcotunnelroute-status: Captured variable: tibcotunnelroute-status.status_cr=processed
+tibcotunnelroute-status: Captured variable: tibcotunnelroute-status.status=0
+tibcotunnelroute-status: Validating condition 'status equal 0'
+tibcotunnelroute-status: Expect condition 'status equal 0' passed
+tibcotunnelroute-status: Validating condition 'status_cr containsStr processed'
+tibcotunnelroute-status: Expect condition 'status_cr containsStr processed' passed
+tibcotunnelroute-status: [OK] Execution results match all expected results
+tibcotunnelroute-status: Completed iteration #0 with status: PASS
+===== tibcotunnelroute-status: PASS in 8.43345578s (1 iterations)
+sleepCommand: Starting task execution
+sleepCommand: Replacing task placeholders (if any)
+tibtunnelConnect: Starting task execution
+sleepCommand: Start iteration #0
+sleepCommand: Executing script: 'sleep 25'
+tibtunnelConnect: Replacing task placeholders (if any)
+tibtunnelConnect: Start iteration #0
+tibtunnelConnect: Executing script: '/bin/bash -c timeout 20s ./tibtunnel connect -d --remote-debug -s 8081:127.0.0.1:8081 https://tenantx-tunnel.compute-dev.tcie.pro/tcp-client2 -l ./tibtunnelLog'
+tibtunnelConnect: [STDERR] time="2021-06-21 18:26:05" level=info msg="Redirecting output to file './tibtunnelLog'"
+tibtunnelConnect: Captured variable: tibtunnelConnect.status=124
+tibtunnelConnect: [OK] Execution results match all expected results
+tibtunnelConnect: Completed iteration #0 with status: PASS
+===== tibtunnelConnect: PASS in 21.019419415s (1 iterations)
+sleepCommand: Captured variable: sleepCommand.status=0
+sleepCommand: [OK] Execution results match all expected results
+sleepCommand: Completed iteration #0 with status: PASS
+===== sleepCommand: PASS in 25.003939134s (1 iterations)
+tibtunnelLogValidate: Starting task execution
+tibtunnelLogValidate: Replacing task placeholders (if any)
+tibtunnelLogValidate: Start iteration #0
+tibtunnelLogValidate: Executing script: '/bin/bash -c cat /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog | grep -E ') PING|) PONG''
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 17:56:31" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:24:12" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+tibtunnelLogValidate: [STDOUT] time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: Captured variable: tibtunnelLogValidate.output=time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+time="2021-06-21 17:50:39" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+time="2021-06-21 17:52:54" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+time="2021-06-21 17:56:30" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+time="2021-06-21 17:56:31" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+time="2021-06-21 18:24:11" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+time="2021-06-21 18:24:12" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T<- ) PING"
+time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T-> ) PONG"
+time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T-> ) PING"
+time="2021-06-21 18:26:23" level=debug msg="tibtunnel(proxy): (T<- ) PONG"
+tibtunnelLogValidate: Captured variable: tibtunnelLogValidate.status=0
+tibtunnelLogValidate: [OK] Execution results match all expected results
+tibtunnelLogValidate: Completed iteration #0 with status: PASS
+===== tibtunnelLogValidate: PASS in 0.00971858s (1 iterations)
+teardown.delete_yaml_file: Starting task execution
+teardown.delete_yaml_file: Replacing task placeholders (if any)
+teardown.delete_yaml_file: Start iteration #0
+teardown.delete_yaml_file: Executing script: '/Users/sugandhi/Desktop/GITRepository/Hybrid-Proxy-Operator-Regression/resources/common-functions.sh deleteResourse ./generated/tibcotunnelrouteCR.yaml'
+teardown.delete_yaml_file: [STDOUT] tibcotunnelroute.cloud.tibco.com "tcp-client-vs" deleted
+teardown.delete_yaml_file: Captured variable: teardown.delete_yaml_file.status=0
+teardown.delete_yaml_file: Validating condition 'status equal 0'
+teardown.delete_yaml_file: Expect condition 'status equal 0' passed
+teardown.delete_yaml_file: [OK] Execution results match all expected results
+teardown.delete_yaml_file: Completed iteration #0 with status: PASS
+===== teardown.delete_yaml_file: PASS in 5.312792867s (1 iterations)
+teardown.confirm_deletionCR: Starting task execution
+teardown.confirm_deletionCR: Replacing task placeholders (if any)
+teardown.confirm_deletionCR: Start iteration #0
+teardown.confirm_deletionCR: Executing script: '/Users/sugandhi/Desktop/GITRepository/Hybrid-Proxy-Operator-Regression/resources/common-functions.sh getResources tibcotunnelroute aws-compute-tibco-tenantx'
+teardown.confirm_deletionCR: [STDERR] I0621 18:26:43.194212   20670 request.go:668] Waited for 1.146209781s due to client-side throttling, not priority and fairness, request: GET:https://5BBC3CBFE4A75296A2007C80C8BBC301.gr7.us-west-2.eks.amazonaws.com/apis/cert-manager.io/v1alpha3?timeout=32s
+teardown.confirm_deletionCR: [STDOUT] {
+teardown.confirm_deletionCR: [STDOUT]     "apiVersion": "v1",
+teardown.confirm_deletionCR: [STDOUT]     "items": [
+teardown.confirm_deletionCR: [STDOUT]         {
+teardown.confirm_deletionCR: [STDOUT]             "apiVersion": "cloud.tibco.com/v1",
+teardown.confirm_deletionCR: [STDOUT]             "kind": "TibcoTunnelRoute",
+teardown.confirm_deletionCR: [STDOUT]             "metadata": {
+teardown.confirm_deletionCR: [STDOUT]                 "annotations": {
+teardown.confirm_deletionCR: [STDOUT]                     "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"cloud.tibco.com/v1\",\"kind\":\"TibcoTunnelRoute\",\"metadata\":{\"annotations\":{},\"name\":\"tcp-client-vs-2\",\"namespace\":\"aws-compute-tibco-tenantx\"},\"spec\":{\"endpoint\":{\"config\":\"accesskey\",\"configVariables\":{\"ACCESS_KEY_HASH\":\"{PBKDF2-43}40000:6+b8oJaUNK6WKhXuY7GqTw:I5C7pYTi7suy8I7jhA/HHNG/i3Ku/n/dkO53gqBqT+Q\"},\"fqdn\":\"tenantx-tunnel.compute-dev.tcie.pro\",\"path\":\"/tcp-client4\"},\"selector\":{\"app.kubernetes.io/name\":\"tcp-client\"}}}\n"
+teardown.confirm_deletionCR: [STDOUT]                 },
+teardown.confirm_deletionCR: [STDOUT]                 "creationTimestamp": "2021-06-21T12:41:49Z",
+teardown.confirm_deletionCR: [STDOUT]                 "generation": 2,
+teardown.confirm_deletionCR: [STDOUT]                 "name": "tcp-client-vs-2",
+teardown.confirm_deletionCR: [STDOUT]                 "namespace": "aws-compute-tibco-tenantx",
+teardown.confirm_deletionCR: [STDOUT]                 "resourceVersion": "236693",
+teardown.confirm_deletionCR: [STDOUT]                 "uid": "89ce2bd3-b5d1-40a7-8388-61664a35d8f0"
+teardown.confirm_deletionCR: [STDOUT]             },
+teardown.confirm_deletionCR: [STDOUT]             "spec": {
+teardown.confirm_deletionCR: [STDOUT]                 "endpoint": {
+teardown.confirm_deletionCR: [STDOUT]                     "config": "accesskey",
+teardown.confirm_deletionCR: [STDOUT]                     "configVariables": {
+teardown.confirm_deletionCR: [STDOUT]                         "ACCESS_KEY_HASH": "{PBKDF2-43}40000:6+b8oJaUNK6WKhXuY7GqTw:I5C7pYTi7suy8I7jhA/HHNG/i3Ku/n/dkO53gqBqT+Q"
+teardown.confirm_deletionCR: [STDOUT]                     },
+teardown.confirm_deletionCR: [STDOUT]                     "fqdn": "tenantx-tunnel.compute-dev.tcie.pro",
+teardown.confirm_deletionCR: [STDOUT]                     "path": "/tcp-client4"
+teardown.confirm_deletionCR: [STDOUT]                 },
+teardown.confirm_deletionCR: [STDOUT]                 "selector": {
+teardown.confirm_deletionCR: [STDOUT]                     "app.kubernetes.io/name": "tcp-client"
+teardown.confirm_deletionCR: [STDOUT]                 }
+teardown.confirm_deletionCR: [STDOUT]             },
+teardown.confirm_deletionCR: [STDOUT]             "status": {
+teardown.confirm_deletionCR: [STDOUT]                 "resource": {
+teardown.confirm_deletionCR: [STDOUT]                     "state": "processed"
+teardown.confirm_deletionCR: [STDOUT]                 }
+teardown.confirm_deletionCR: [STDOUT]             }
+teardown.confirm_deletionCR: [STDOUT]         }
+teardown.confirm_deletionCR: [STDOUT]     ],
+teardown.confirm_deletionCR: [STDOUT]     "kind": "List",
+teardown.confirm_deletionCR: [STDOUT]     "metadata": {
+teardown.confirm_deletionCR: [STDOUT]         "resourceVersion": "",
+teardown.confirm_deletionCR: [STDOUT]         "selfLink": ""
+teardown.confirm_deletionCR: [STDOUT]     }
+teardown.confirm_deletionCR: [STDOUT] }
+teardown.confirm_deletionCR: Captured variable: teardown.confirm_deletionCR.confirm_deleteCR=tcp-client-vs-2
+teardown.confirm_deletionCR: Captured variable: teardown.confirm_deletionCR.status=0
+teardown.confirm_deletionCR: Validating condition 'status equal 0'
+teardown.confirm_deletionCR: Expect condition 'status equal 0' passed
+teardown.confirm_deletionCR: Validating condition 'confirm_deleteCR notContainsStr tcp-client-vs'
+teardown.confirm_deletionCR: ERROR: expect condition 'confirm_deleteCR notContainsStr tcp-client-vs' failed
+teardown.confirm_deletionCR: Completed iteration #0 with status: FAIL
+===== teardown.confirm_deletionCR: FAIL (reason: EXPECT_FAILED) in 8.707211783s (1 iterations)
