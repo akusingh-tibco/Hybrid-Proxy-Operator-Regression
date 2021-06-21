@@ -106,14 +106,13 @@ tasks:
       - name: output
         operator: notContainsStr
         value: "false"
-
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
     type: foreground
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "awk '/PING/{print}' ./tibtunnelLog-3385"]   
+        args: ["-c", "awk '/PING/{print}' /Users/akusingh/Github_Desktop/Hybrid-Proxy-Operator-Regression-/tibtunnelLog-3395"]   
         capture:
           stdout:
             - name: output
@@ -122,6 +121,9 @@ tasks:
       - name: output
         operator: containsStr
         value: "PING"
+      - name: output
+        operator: containsStr
+        value: "PONG"
   - name: sleepComm
     type: foreground
     exec:
