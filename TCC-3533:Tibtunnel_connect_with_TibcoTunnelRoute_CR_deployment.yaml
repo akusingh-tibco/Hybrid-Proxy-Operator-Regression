@@ -1,0 +1,62 @@
+name: Tibtunnel_connect_with_TibcoTunnelRoute_CR_deploymentt
+
+tasks: 
+    
+# Deploy Tibcotunnelroute CR
+  - name: tibcotunnelrouteCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR-3533.yaml"
+    exec: 
+     timeout: 30s
+     script: 
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/tibcotunnelrouteCR-3533.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+      
+# Status of Tibcotunneroute CR
+  - name: tibcotunnelrouteCR_Status
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+teardown: 
+
+# Delete the Tibcotunneroute CR
+  - name: delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "kubectl"
+        args: ["delete", "-f", "./generated/tibcotunnelrouteCR-3533.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
