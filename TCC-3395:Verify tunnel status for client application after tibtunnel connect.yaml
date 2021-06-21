@@ -1,0 +1,123 @@
+name: TUnnelStatus
+
+tasks: 
+
+# Deploy CR file 
+  - name: TCC-deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/singleDeploy.yaml"
+        output: "./generated/singleDeploy-3395.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/singleDeploy-3395.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# tibtunnel configuration
+  - name: tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+
+# Status tibcotunnelroute specific
+  - name: state_of_tibcotunnelroute
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+# Status of Pods
+  - name: status_of_all_client-pods
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-n", "${NAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: -1
+      until: success 
+      sleep: 20ms
+
+# Start tibtunnel 
+  - name: tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3395" ]
+
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: checkTunnelStatus
+    type: foreground
+    exec:
+      script:
+        cmd: "kubectl"
+        args: ["exec", "${status_of_all_client-pods.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+  
+     
+  - name: sleepComm
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["80"]
