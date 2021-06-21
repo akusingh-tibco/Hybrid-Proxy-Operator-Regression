@@ -122,38 +122,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 40s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3385" ]
-  # - name: sleepCommand
-  #   type: background
-  #   exec:
-  #     script:
-  #       cmd: "sleep"
-  #       args: ["40"]
-
-# Tibtunnel logs for PING/PONG
-  - name: tibtunnelLogValidate
-    type: foreground
-    exec:
-      script:
-        cmd: "/bin/bash"
-        args: ["-c", "cat /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression-/tibtunnelLog | grep -E ') PING|) PONG'"]   
-        capture:
-          stdout:
-            - name: output
-              match: "((?s).*)"
-      expect:
-      - name: output
-        operator: containsStr
-        value: "PING"
-      - name: output
-        operator: containsStr
-        value: "PONG"
-  - name: sleepCommand
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["10"]
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3385" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
   - name: checkTunnelStatus
@@ -181,9 +150,9 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["20"]
+        args: ["30"]
 
-# teardown: 
+teardown: 
 
 # Delete the Tibcotunneroute CR
   - name: delete_yaml_file
