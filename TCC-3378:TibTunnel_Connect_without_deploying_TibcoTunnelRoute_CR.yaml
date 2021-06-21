@@ -1,0 +1,81 @@
+name: sanity-SingleDeploymentwithDataTransfer-IPIPIP
+
+tasks: 
+  
+# Tibtunnel Configure Profile and Verify Profile
+  - name: tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.AccesssecretKey-AccessHashKey-generation.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.AccesssecretKey-AccessHashKey-generation.accesskey}"
+ 
+# Deploy Tibcotunnelroute CR
+  - name: tibcotunnelroute-status-withFunctions
+    type: foreground
+    templates:
+     - input: "./resources/services/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 30s
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+      
+# Status of Tibcotunneroute CR
+  - name: tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+

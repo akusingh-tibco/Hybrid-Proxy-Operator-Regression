@@ -1,0 +1,137 @@
+name: TCC-3533-Tibtunnel-connect-with-TibcoTunnelRoute-CR-deployment
+
+tasks: 
+  
+# Tibtunnel Configure Profile and Verify Profile
+  - name: tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}"
+ 
+# Deploy Tibcotunnelroute CR
+  - name: tibcotunnelroute-status-withFunctions
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 30s
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+      
+# Status of Tibcotunneroute CR
+  - name: tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+# Tibtunnel Connect
+  - name: tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 10s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+
+teardown: 
+
+  - name: delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        #cmd: "kubectl"
+        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+
+
+# Verify Tibcotunneroute CR Deletion
+  - name: confirm_deletionCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        #cmd: "kubectl"
+        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: confirm_deleteCR
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_deleteCR
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+
