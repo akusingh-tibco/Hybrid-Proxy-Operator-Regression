@@ -436,5 +436,95 @@ tasks:
 
 teardown: 
 
-#include cleanup as well
+  - name: delete_TibcoTunnelRouteCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        #cmd: "kubectl"
+        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 30ms
+
+# Delete the ClientApp Deployments
+  - name: delete_clientApps
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        #cmd: "kubectl"
+        #args: ["delete", "-f", "./generated/client-app.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/client-app.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 30ms
+
+# Verify Tibcotunneroute CR Deletion
+  - name: confirmDeletionOfTibcoTunnelRouteCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        #cmd: "kubectl"
+        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: confirm_deleteCR
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_deleteCR
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+
+
+# Verify ClientApp Deployments deletion
+  - name: confirmDeletionOfClientApplications
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        #cmd: "kubectl"
+        #args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "deploy", "${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: confirm_deleteA
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_deleteA
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+    repeat:
+      count: 20
+      until: success
+      sleep: 1s 
+
+
+
+#include cleanup.yaml as well
 
