@@ -186,7 +186,7 @@ tasks:
         operator: containsStr
         value: "PING"
 # Execution Output
-  - name: INFO_______________TCC-533_____testcasecompletion
+  - name: INFO_______________TCC-3533_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -276,6 +276,10 @@ tasks:
       - name: output
         operator: containsStr
         value: "PONG"
+    repeat:
+      count: 6
+      until: success
+      sleep: 5s
   - name: sleepCommand
     type: foreground
     exec:
@@ -322,14 +326,14 @@ tasks:
         operator: equal
         value: 0
 
-# TCC-3944: 
+# TCC-3394: 
 
   - name: tibtunnelConnect
     type: background
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3944" ]
+        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3394" ]
 # deploy TibcoTunnelRoute CR
   - name: tibcotunnelroute-status-withFunctions
     type: foreground
@@ -352,6 +356,12 @@ tasks:
      - name: status
        operator: equal
        value: 0
+  - name: sleepCommands
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
 # validating logs closing tunnel (WS connection) 
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
@@ -360,7 +370,7 @@ tasks:
       script:
         cmd: "/bin/bash"
        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
-        args: ["-c", "cat $PWD/tibtunnelLog-3944 | grep 'closing tunnel (WS connection)' "]  
+        args: ["-c", "cat $PWD/tibtunnelLog-3394 | grep 'closing tunnel (WS connection)' "]  
         capture:
           stdout:
             - name: closeTunnelOutput
@@ -373,13 +383,13 @@ tasks:
         operator: containsStr
         value: "closing tunnel (WS connection)"
 # Tibtunnel logs for 
-  - name: tibtunnelLogValidate
+  - name: tibtunnelLogValidate2
     type: foreground
     exec:
       script:
         cmd: "/bin/bash"
        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
-        args: ["-c", "cat $PWD/tibtunnelLog-3944 | grep 'unexpected status'|grep '404' "]  
+        args: ["-c", "cat $PWD/tibtunnelLog-3394 | grep 'unexpected status'|grep '404' "]  
         capture:
           stdout:
             - name: closeTunnelOutput1
@@ -392,9 +402,6 @@ tasks:
       - name: closeTunnelOutput1
         operator: containsStr
         value: "unexpected status '404' for tunnel connectURL"
-
-    
-
   - name: sleepComm
     type: foreground
     exec:
@@ -402,7 +409,7 @@ tasks:
         cmd: "sleep"
         args: ["120"]
 # Execution Output
-  - name: INFO_______________TCC-3944_____testcasecompletion
+  - name: INFO_______________TCC-3394_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -498,4 +505,4 @@ teardown:
     repeat:
       count: 20
       until: success
-      sleep: 1s 
+      sleep: 1s

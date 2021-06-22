@@ -4,7 +4,7 @@ name: suite
 setup:
 
 
-#  AccessKeyHash and AccessSecretkey generation
+# AccessKeyHash and AccessSecretkey generation
 
 # Deploy test-service as Intercom-Client
   - name: deployIntercomClient
