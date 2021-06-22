@@ -2,8 +2,18 @@ name: suite
 
 
 setup:
-
-
+# Cleaning up log files
+  - name: deleteLogFiles
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "/bin/bash"
+        args: ["-c", "rm -f -- $PWD/*Log*"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
 # AccessKeyHash and AccessSecretkey generation
 
 # Deploy test-service as Intercom-Client
