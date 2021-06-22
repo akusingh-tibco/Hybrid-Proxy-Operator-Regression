@@ -93,9 +93,8 @@ tasks:
         operator: equal
         value: 0
 
-
-
 # TCC-3384:Validate_TibcoTunnelRoute_CR_Deployment_Status.yaml
+
 # Deploy Tibcotunnelroute CR
   - name: tibcotunnelroute-status-withFunctions
     type: foreground
@@ -152,8 +151,6 @@ tasks:
       - name: status
         operator: equal
         value: 0
-
-
 
 # TCC-3533:Tibtunnel_connect_with_TibcoTunnelRoute_CR_deployment.yaml
 
@@ -262,6 +259,7 @@ tasks:
       script:
         cmd: "sleep"
         args: ["15"]
+
 # Tibtunnel Connect
   - name: tibtunnelConnect
     type: background
@@ -269,7 +267,6 @@ tasks:
       script:
         cmd: "/bin/bash"
         args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3385" ]
-
 
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
@@ -369,7 +366,7 @@ tasks:
        operator: equal
        value: 0
 
-# closing tunnel (WS connection) 
+# validating logs closing tunnel (WS connection) 
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
     type: foreground
@@ -389,8 +386,6 @@ tasks:
       - name: closeTunnelOutput
         operator: containsStr
         value: "closing tunnel (WS connection) "
-
-
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
     type: foreground
@@ -436,6 +431,7 @@ tasks:
 
 teardown: 
 
+# Delete tibcocunnelroute CR
   - name: delete_TibcoTunnelRouteCR
     type: foreground
     exec: 
@@ -449,10 +445,6 @@ teardown:
       - name: status
         operator: equal
         value: 0
-    repeat:
-      count: 3
-      until: success
-      sleep: 30ms
 
 # Delete the ClientApp Deployments
   - name: delete_clientApps
@@ -468,10 +460,6 @@ teardown:
       - name: status
         operator: equal
         value: 0
-    repeat:
-      count: 3
-      until: success
-      sleep: 30ms
 
 # Verify Tibcotunneroute CR Deletion
   - name: confirmDeletionOfTibcoTunnelRouteCR
@@ -495,7 +483,10 @@ teardown:
       - name: confirm_deleteCR
         operator: notContainsStr
         value: "${META_DATA_NAME}"
-
+    repeat:
+      count: 20
+      until: success
+      sleep: 1s
 
 # Verify ClientApp Deployments deletion
   - name: confirmDeletionOfClientApplications
@@ -523,8 +514,6 @@ teardown:
       count: 20
       until: success
       sleep: 1s 
-
-
 
 #include cleanup.yaml as well
 
