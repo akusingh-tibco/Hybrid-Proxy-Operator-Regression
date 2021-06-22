@@ -61,7 +61,7 @@ tasks:
       script:
         cmd: "/bin/bash"
        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
-        args: ["-c", "cat $PWD/tibtunnelLog | grep 'unexpected status'|grep '404' "]  
+        args: ["-c", "cat $PWD/tibtunnelLog | grep 'no such host'"]  
         capture:
           stdout:
             - name: output
@@ -72,7 +72,7 @@ tasks:
         value: 0
       - name: output
         operator: containsStr
-        value: "${Error1}"
+        value: "no such host"
   # - name: sleepComm
   #   type: foreground
   #   exec:
