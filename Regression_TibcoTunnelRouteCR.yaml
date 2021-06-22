@@ -2,6 +2,7 @@ name: TibcoTunnelRoute_CR_TestSuite
 
 env:
   WRONGPATH: dxgdfghggfhjhgmjkjhggbc
+  WRONGENDPOINT: tcp-client7
 
 
 tasks: 
@@ -39,7 +40,7 @@ tasks:
         operator: containsStr
         value: "${suite.setup.secretKey_hashKey.accesskey}"
 
-# TCC-3533:Tibtunnel_connect_with_TibcoTunnelRoute_CR_deployment.yaml
+# TCC-3378:TibTunnel_Connect_without_deploying _TibcoTunnelRoute _CR
   - name: tibtunnelConnect
     type: background
     exec:
@@ -53,7 +54,6 @@ tasks:
       script:
         cmd: "sleep"
         args: ["25"]
-
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
     type: foreground
@@ -79,9 +79,8 @@ tasks:
   #     script:
   #       cmd: "sleep"
   #       args: ["30"]
-
 # Execution Output
-  - name: INFO_testcasecompletion
+  - name: INFO_______________TCC-3378_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -94,7 +93,6 @@ tasks:
         value: 0
 
 # TCC-3384:Validate_TibcoTunnelRoute_CR_Deployment_Status.yaml
-
 # Deploy Tibcotunnelroute CR
   - name: tibcotunnelroute-status-withFunctions
     type: foreground
@@ -116,8 +114,7 @@ tasks:
     expect:
      - name: status
        operator: equal
-       value: 0
-      
+       value: 0    
 # Status of Tibcotunneroute CR
   - name: tibcotunnelroute-status
     type: foreground
@@ -138,9 +135,8 @@ tasks:
       - name: status_cr
         operator: containsStr
         value: "processed"
-
 # Execution Output
-  - name: INFO_______________testcasecompletion
+  - name: INFO_______________TCC-3384_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -153,7 +149,6 @@ tasks:
         value: 0
 
 # TCC-3533:Tibtunnel_connect_with_TibcoTunnelRoute_CR_deployment.yaml
-
 # Tibtunnel Connect
   - name: tibtunnelConnect
     type: background
@@ -168,7 +163,6 @@ tasks:
       script:
         cmd: "sleep"
         args: ["25"]
-
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
     type: foreground
@@ -191,9 +185,8 @@ tasks:
       - name: pingoutput
         operator: containsStr
         value: "PING"
-
 # Execution Output
-  - name: INFO_______________testcasecompletion
+  - name: INFO_______________TCC-533_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -205,8 +198,8 @@ tasks:
         operator: equal
         value: 0
 
-# TCC-3385:Verify_Tibtunnel_connect_with_TibcoTunnelRoute_CR_and_Client-App_deployment.yaml and TCC-3395:Verify_tunnel_status_for_client_application_after_tibtunnelconnect
-
+# TCC-3385:Verify_Tibtunnel_connect_with_TibcoTunnelRoute_CR_and_Client-App_deployment.yaml and 
+# TCC-3395:Verify_tunnel_status_for_client_application_after_tibtunnelconnect
 # Deploy ClientAppn Deployments
   - name: deployClientApp
     type: foreground
@@ -222,7 +215,6 @@ tasks:
       - name: status
         operator: equal
         value: 0
-
 # Status of Client Applications
   - name: status_of-clientAppn
     type: foreground
@@ -259,15 +251,13 @@ tasks:
       script:
         cmd: "sleep"
         args: ["15"]
-
 # Tibtunnel Connect
   - name: tibtunnelConnect
     type: background
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3385" ]
-
+        args: ["-c", "timeout 30s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3385" ]
 # Tibtunnel logs for PING/PONG
   - name: tibtunnelLogValidate
     type: foreground
@@ -291,8 +281,7 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["10"]
-
+        args: ["5"]
 # Tunnel Status b/w tibtunnel and Client App 
   - name: checkTunnelStatus
     type: foreground
@@ -319,10 +308,9 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["20"]
-
+        args: ["40"]
 # Execution Output
-  - name: INFO_______________testcasecompletion
+  - name: INFO_______________TCC-3385--and--TCC-3395_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -342,7 +330,6 @@ tasks:
       script:
         cmd: "/bin/bash"
         args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3944" ]
-
 # deploy TibcoTunnelRoute CR
   - name: tibcotunnelroute-status-withFunctions
     type: foreground
@@ -365,7 +352,6 @@ tasks:
      - name: status
        operator: equal
        value: 0
-
 # validating logs closing tunnel (WS connection) 
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
@@ -385,7 +371,7 @@ tasks:
         value: 0
       - name: closeTunnelOutput
         operator: containsStr
-        value: "closing tunnel (WS connection) "
+        value: "closing tunnel (WS connection)"
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
     type: foreground
@@ -415,9 +401,8 @@ tasks:
       script:
         cmd: "sleep"
         args: ["120"]
-
 # Execution Output
-  - name: INFO_______________testcasecompletion
+  - name: INFO_______________TCC-3944_____testcasecompletion
     type: foreground
     exec:
       timeout: 2s
@@ -514,6 +499,3 @@ teardown:
       count: 20
       until: success
       sleep: 1s 
-
-#include cleanup.yaml as well
-
