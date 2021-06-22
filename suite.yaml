@@ -1,15 +1,18 @@
 name: suite
 
+
 setup:
 
-# TCC - 3386 AccessKeyHash and AccessSecret Generation using intercom operator.
-# deploy client.yaml with test-service
-  - name: deploy_yaml_file
+
+#  AccessKeyHash and AccessSecretkey generation
+
+# Deploy test-service as Intercom-Client
+  - name: deployIntercomClient
     type: foreground
-    templates:
+    templates: 
       - input: "./resources/client-intercom.yaml"
         output: "./generated/client-intercom.yaml"
-    exec:
+    exec: 
       timeout: 2m
       script:
         cmd: "kubectl"
@@ -18,30 +21,44 @@ setup:
       - name: status
         operator: equal
         value: 0
-# AccessKeyHash and AccessSecretkey generation
-  - name: secretKey_hashKey
+
+# To Discover Intercom-client Pod
+  - name: getIntercomPod
     type: foreground
-    templates:
-      - input: "./resources/intercom-key.json"
-        output: "./generated/intercom-key.json"
     exec:
-      timeout: 2m
-      http:
-        url: "https://${FQDN_DNS}/qa/intercom-client/exec"
-        method: "POST"
-        payload:
-          fromFile: "./generated/intercom-key.json"
+      timeout: 1m
+      script:
+        cmd: "kubectl"
+        args: ["get", "pods","-l", "app.kubernetes.io/name=intercom-client", "-n", "${NAMESPACE_TENANT}", "-ojson"]
         capture:
-          body:
-            - name: accesskey
+          stdout:
+            - name: IntPod
+              match: "{.items[*].metadata.name}"
               matchType: jsonpath
-              match: "{[?(@.type=='http')].data.accessKeySecret}"
-            - name: accesshash
-              matchType: jsonpath
-              match: "{[?(@.type=='http')].data.accessKeyHash}"
     expect:
       - name: status
         operator: equal
-        value: 200
+        value: 0
+
+# AccessKeyHash and AccessSecretkey generation
+  - name: secretKey_hashKey
+    type: foreground  
+    exec:
+      timeout: 1m
+      script: 
+        cmd: "kubectl"
+        args: ["exec", "-n", "${NAMESPACE_TENANT}", "${suite.setup.getIntercomPod.IntPod}", "--", "curl", "-s", "-H", "X-Atmosphere-For-User:qa", "-X", "POST", "http://router.${NAMESPACE_SYSTEM}.svc.cluster.local:90/infra/accesskeys"]
+        capture:
+          stdout:
+            - name: accesskey
+              matchType: jsonpath
+              match: "{.accessKeySecret}"
+            - name: accesshash
+              matchType: jsonpath
+              match: "{.accessKeyHash}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
 
 teardown:
