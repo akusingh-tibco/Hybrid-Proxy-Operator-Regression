@@ -18,6 +18,8 @@ tasks:
            - name: output
              match: "((?s).*)"
          stderr:
+
+         
             - name: outerr
               match: "((?s).*)"
     expect:

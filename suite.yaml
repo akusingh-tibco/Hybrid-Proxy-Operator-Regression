@@ -16,6 +16,8 @@ setup:
         value: 0 
 # AccessKeyHash and AccessSecretkey generation
 
+
+
 # Deploy test-service as Intercom-Client
   - name: deployIntercomClient
     type: foreground
