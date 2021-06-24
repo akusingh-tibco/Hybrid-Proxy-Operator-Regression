@@ -199,7 +199,6 @@ tasks:
         operator: equal
         value: 0
 
-
 # TCC-3385:Verify_Tibtunnel_connect_with_TibcoTunnelRoute_CR_and_Client-App_deployment.yaml and 
 # TCC-3395:Verify_tunnel_status_for_client_application_after_tibtunnelconnect
 # Deploy ClientAppn Deployments
@@ -218,7 +217,7 @@ tasks:
         operator: equal
         value: 0
 # Status of Client Applications
-  - name: TCC-3385_status_of-clientAppn
+  - name: status_of-clientAppn
     type: foreground
     exec: 
       timeout: 30s
@@ -331,16 +330,8 @@ tasks:
         operator: equal
         value: 0
 
-<<<<<<< HEAD
-
-#Data transfer testcase
-#scaleup testcase 
-# TCC-3394:path update 
-
-=======
 # TCC-3394: 
 # tibtunnelConnect
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
   - name: tibtunnelConnect
     type: background
     exec:
@@ -375,16 +366,6 @@ tasks:
      - name: status
        operator: equal
        value: 0
-<<<<<<< HEAD
-# sleep
-  - name: sleepCommands
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["30"]
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 # validating logs closing tunnel (WS connection) 
 # Tibtunnel logs for 
   - name: tibtunnelLogValidate
@@ -444,10 +425,6 @@ tasks:
         operator: equal
         value: 0
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 #TCC-TCC-3393:Delete_the_TibcoTunnelRoute_CR_while_tibtunnel_is_running
 # Tibtunnel Connect
   - name: tibtunnelConnectTCC3393
@@ -456,10 +433,6 @@ tasks:
       script:
         cmd: "/bin/bash"
         args: ["-c", "timeout 45s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3393" ]
-<<<<<<< HEAD
-
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 # sleep
   - name: sleepCommand
     type: foreground
@@ -467,11 +440,6 @@ tasks:
       script:
         cmd: "sleep"
         args: ["15"]
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 # Delete tibcocunnelroute CR
   - name: delete_TibcoTunnelRouteCR
     type: foreground
@@ -493,12 +461,7 @@ tasks:
       script:
         cmd: "sleep"
         args: ["15"]
-<<<<<<< HEAD
-
-# Tibtunnel logs for closing tunn el (WS connection)
-=======
 # Tibtunnel logs for closing tunnel (WS connection)
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
   - name: tibtunnelLogValidate
     type: foreground
     exec:
@@ -517,11 +480,6 @@ tasks:
       - name: closeTunnelOutput
         operator: containsStr
         value: "closing tunnel (WS connection)"
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 # Tibtunnel logs for unexpected status '404' for tunnel connectURL
   - name: tibtunnelLogValidate
     type: foreground
@@ -541,23 +499,13 @@ tasks:
       - name: outputTunnel
         operator: containsStr
         value: "${Error1}"
-<<<<<<< HEAD
-
-# sleep
-=======
         # sleep
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
         args: ["30"]
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 008051e224c07bbfe3e00d8027cb21641852f3b8
 teardown: 
 
 # # Delete tibcocunnelroute CR
