@@ -1,9 +1,12 @@
-name: Sanity_SingleDeploymentwithDataTransfer_With_localhst
+name: TCC-3424_DataTransfer_with_SpecificSize_in_KiB
+
+env:
+  SIZEinKiB: 10
 
 tasks: 
 
 # Deploy Tibcotunnelroute CR
-  - name: deployCR
+  - name: TCC-3424_deployCR
     type: foreground
     templates:
      - input: "./resources/tibcotunnelrouteCR.yaml"
@@ -26,7 +29,7 @@ tasks:
        value: 0
 
 # Status of Tibcotunneroute CR
-  - name: tibcotunnelroute-status
+  - name: TCC-3424_tibcotunnelroute-status
     type: foreground
     exec: 
       timeout: 30s
@@ -47,7 +50,7 @@ tasks:
         value: "processed"
 
 # Deploy ClientAppn Deployments
-  - name: deployClientApp
+  - name: TCC-3424_deployClientApp
     type: foreground
     templates: 
       - input: "./resources/client-app.yaml"
@@ -62,8 +65,25 @@ tasks:
         operator: equal
         value: 0
 
+# tibtunnel configuration
+  - name: TCC-3424_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+
 # Status of Client Applications
-  - name: status_of-clientAppn
+  - name: TCC-3424_status_of-clientAppn
     type: foreground
     timeout: 1m
     exec:
@@ -94,7 +114,7 @@ tasks:
       sleep: 20s  
 
 # Tibtunnel Connect
-  - name: tibtunnelConnect
+  - name: TCC-3424_tibtunnelConnect
     type: background
     exec:
       script:
@@ -102,15 +122,13 @@ tasks:
         args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
-  - name: checkTunnelStatus
+  - name: TCC-3424_checkTunnelStatus
     type: foreground
-    timeout: 20s
+    timeout: 30s
     exec:
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
         cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        args: ["checkTunnelStatus","${TCC-3424_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
         capture:
           stdout: 
             - name: output
@@ -126,12 +144,12 @@ tasks:
         operator: containsStr
         value: "Tunnel is connected"
     repeat:
-      count: 3
+      count: 2
       until: success
-      sleep: 20ms  
+      sleep: 13s  
 
 # Start On-Prem Appn
-  - name: startOnpremAppn
+  - name: TCC-3424_startOnpremAppn
     type: background
     exec:
       script:
@@ -150,15 +168,13 @@ tasks:
         value: "TCP server started"
 
 # Communication b/w ClientPod and On-Prem Appn by sending Data
-  - name: sendData
+  - name: TCC-3424_sendData
     type: foreground
     exec:
       timeout: 30s
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}" ]
+        args: ["dataTransferwithSIZE", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${SIZEinKiB}" ]
         capture:
           stdout:
             - name: output
@@ -169,22 +185,18 @@ tasks:
     expect:
       - name: stderr
         operator: containsStr
-        value: "Successfully send/received 1.0KiB"
-    repeat:
-      count: 3
-      until: success
-      sleep: 2s 
+        value: "Successfully send/received ${SIZEinKiB}.0KiB" 
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["80"]
+        args: ["70"]
 
 teardown: 
 
 # Delete the Tibcotunneroute CR
-  - name: delete_yaml_file
+  - name: TCC-3424_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -199,7 +211,7 @@ teardown:
         value: 0
 
 # Delete the ClientApp Deployments
-  - name: delete_yaml_file
+  - name: TCC-3424_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -218,7 +230,7 @@ teardown:
       sleep: 10ms
 
 # Verify Tibcotunneroute CR Deletion
-  - name: confirm_deletionCR
+  - name: TCC-3424_confirm_deletionCR
     type: foreground
     exec: 
       timeout: 1m
@@ -241,7 +253,7 @@ teardown:
         value: "${META_DATA_NAME}"
 
 # Verify ClientApp Deployments deletion
-  - name: confirm_deletionA
+  - name: TCC-3424_confirm_deletionA
     type: foreground
     timeout: 1m
     exec: 
@@ -268,7 +280,7 @@ teardown:
       sleep: 10s 
 
 # Verify client-pod deletion
-  - name: confirm_client-pod_deletee
+  - name: TCC-3424_confirm_client-pod_deletee
     type: foreground
     timeout: 1m
     exec: 

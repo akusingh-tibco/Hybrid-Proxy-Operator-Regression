@@ -1,0 +1,124 @@
+name: TCC-3392_WrongAccessSecretKey_Configur
+
+tasks:
+
+# TCC-3392:Wrong Access Secret Key configured - verify tibtunnel
+# Deploy CR file 
+  - name: TCC-3392_deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/singleDeploy.yaml"
+        output: "./generated/singleDeploy3392.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/singleDeploy3392.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+# WrongAccessSecret Key tibtunnelConfiguration
+  - name: TCC-3392_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}ss"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+# Status tibcotunnelroute specific
+  - name: TCC-3392_state_of_tibcotunnelroute
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+# Status of Pods
+  - name: TCC-3392_status_of_all_client-pods
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-n", "${NAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: -1
+      until: success 
+      sleep: 20ms  
+# Start tibtunnel 
+  - name: TCC-3392_tibtunnelConnect
+    type: foreground
+    timeout: 15s
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        capture:
+          stdout:
+              - name: output
+                match: "((?s).*)"
+          stderr:
+             - name: stderr
+               match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "tunnel ended with a runtime error"     #if you open tibtunnel Log it will show supplied credentials are invalid error.
+ 
+teardown:
+
+# Delete the ClientApp Deployments
+  - name: TCC-3392_delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/singleDeploy3392.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 10s

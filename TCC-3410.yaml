@@ -1,0 +1,117 @@
+name: TCC-3410_clientApp_with_selector_tunnel-disabled
+tasks: 
+
+# Deploy CR file 
+  - name: TCC-3410_deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/ClientAppTibcotunnelRouteCr_Disabled.yaml"
+        output: "./generated/ClientAppTibcotunnelRouteCr_Disabled.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/ClientAppTibcotunnelRouteCr_Disabled.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+# tibtunnel configuration
+  - name: TCC-3410_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+# Status of Pods
+  - name: TCC-3410_status_of_all_client-pods
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "${ENV.fnSh}"
+        args: ["getPodNamesUsingSelector", "${NAMESPACE_TENANT}", "app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: -1
+      until: success 
+      sleep: 20ms
+# Start tibtunnel 
+  - name: TCC-3410_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3395" ]
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: TCC-3410_checkTunnelStatus
+    type: foreground
+    exec:
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["checkTunnelStatus","${TCC-3410_status_of_all_client-pods.capture_pod_name}","${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":false"
+      - name: output
+        operator: containsStr
+        value: "false"
+      - name: output
+        operator: containsStr
+        value: "No tunnel is connected"
+  - name: TCC-3410_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
+
+teardown:
+
+# Delete deployed Yaml.
+  - name: TCC-3410_Delete_ClientAppYaml
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/ClientAppTibcotunnelRouteCr_Disabled.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 10s
