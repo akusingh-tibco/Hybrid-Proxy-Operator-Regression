@@ -124,8 +124,6 @@ tasks:
     timeout: 30s
     exec:
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
         cmd: "${ENV.fnSh}"
         args: ["checkTunnelStatus","${status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
         capture:
@@ -172,8 +170,6 @@ tasks:
     exec:
       timeout: 30s
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
         cmd: "${ENV.fnSh}"
         args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "-s 10" ]
         capture:
@@ -224,8 +220,6 @@ tasks:
     exec:
       timeout: 30s
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
         cmd: "${ENV.fnSh}"
         args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "-s 10" ]
         capture:
@@ -259,8 +253,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
     expect:
@@ -274,8 +266,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/client-app.yaml"]
     expect:

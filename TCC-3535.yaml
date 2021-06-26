@@ -257,8 +257,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
     expect:
@@ -272,8 +270,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/client-app.yaml"]
     expect:

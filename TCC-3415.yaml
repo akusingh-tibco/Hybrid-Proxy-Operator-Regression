@@ -1,9 +1,9 @@
-name: Sanity_SingleDeploymentwithDataTransfer_With_localhst
+name: TCC-3415_Sanity_SingleDeploymentwithDataTransfer_With_localhst
 
 tasks: 
 
 # Deploy Tibcotunnelroute CR
-  - name: deployCR
+  - name: TCC-3415_deployCR
     type: foreground
     templates:
      - input: "./resources/tibcotunnelrouteCR.yaml"
@@ -26,7 +26,7 @@ tasks:
        value: 0
 
 # Status of Tibcotunneroute CR
-  - name: tibcotunnelroute-status
+  - name: TCC-3415_tibcotunnelroute-status
     type: foreground
     exec: 
       timeout: 30s
@@ -47,7 +47,7 @@ tasks:
         value: "processed"
 
 # Deploy ClientAppn Deployments
-  - name: deployClientApp
+  - name: TCC-3415_deployClientApp
     type: foreground
     templates: 
       - input: "./resources/client-app.yaml"
@@ -63,7 +63,7 @@ tasks:
         value: 0
 
 # tibtunnel configuration
-  - name: TCC-3421_tibTunnelConfigure
+  - name: TCC-3415_tibTunnelConfigure
     type: foreground
     exec:
       timeout: 5s
@@ -80,7 +80,7 @@ tasks:
         value: "'default' was successfully saved"
 
 # Status of Client Applications
-  - name: status_of-clientAppn
+  - name: TCC-3415_status_of-clientAppn
     type: foreground
     timeout: 1m
     exec:
@@ -111,7 +111,7 @@ tasks:
       sleep: 20s  
 
 # Tibtunnel Connect
-  - name: tibtunnelConnect
+  - name: TCC-3415_tibtunnelConnect
     type: background
     exec:
       script:
@@ -119,15 +119,13 @@ tasks:
         args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
-  - name: checkTunnelStatus
+  - name: TCC-3415_checkTunnelStatus
     type: foreground
     timeout: 30s
     exec:
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
         cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        args: ["checkTunnelStatus","${TCC-3415_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
         capture:
           stdout: 
             - name: output
@@ -148,7 +146,7 @@ tasks:
       sleep: 13s  
 
 # Start On-Prem Appn
-  - name: startOnpremAppn
+  - name: TCC-3415_startOnpremAppn
     type: background
     exec:
       script:
@@ -167,7 +165,7 @@ tasks:
         value: "TCP server started"
 
 # Communication b/w ClientPod and On-Prem Appn by sending Data
-  - name: sendData
+  - name: TCC-3415_sendData
     type: foreground
     exec:
       timeout: 30s
@@ -201,13 +199,11 @@ tasks:
 teardown: 
 
 # Delete the Tibcotunneroute CR
-  - name: delete_yaml_file
+  - name: TCC-3415_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
     expect:
@@ -216,13 +212,11 @@ teardown:
         value: 0
 
 # Delete the ClientApp Deployments
-  - name: delete_yaml_file
+  - name: TCC-3415_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/client-app.yaml"]
     expect:
@@ -235,13 +229,11 @@ teardown:
       sleep: 10ms
 
 # Verify Tibcotunneroute CR Deletion
-  - name: confirm_deletionCR
+  - name: TCC-3415_confirm_deletionCR
     type: foreground
     exec: 
       timeout: 1m
       script: 
-        #cmd: "kubectl"
-        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
         cmd: "${ENV.fnSh}"
         args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
         capture:
@@ -258,13 +250,11 @@ teardown:
         value: "${META_DATA_NAME}"
 
 # Verify ClientApp Deployments deletion
-  - name: confirm_deletionA
+  - name: TCC-3415_confirm_deletionA
     type: foreground
     timeout: 1m
     exec: 
       script: 
-        #cmd: "kubectl"
-        #args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
         cmd: "${ENV.fnSh}"
         args: ["getResources", "deploy", "${NAMESPACE_TENANT}"]
         capture:
@@ -285,7 +275,7 @@ teardown:
       sleep: 10s 
 
 # Verify client-pod deletion
-  - name: confirm_client-pod_deletee
+  - name: TCC-3415_confirm_client-pod_deletee
     type: foreground
     timeout: 1m
     exec: 

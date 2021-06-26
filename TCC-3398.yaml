@@ -2,6 +2,7 @@ name: TCC-3398_Check_For_HPO_in_Running
 
 tasks: 
 
+# If Hybrid-Proxy-Operator is not present in the cluster, First bring them up in the cluster.
 # Check if there are Hybrid-Proxy-Operator Pod and check for status of each POD and capture name
   - name: TCC-3398_Check_For_HPO
     type: foreground
