@@ -64,8 +64,10 @@ tasks:
     exec: 
       timeout: 30s
       script: 
-        cmd: "kubectl"
-        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        # cmd: "kubectl"
+        # args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
         capture: 
           stdout: 
             - name : status_cr

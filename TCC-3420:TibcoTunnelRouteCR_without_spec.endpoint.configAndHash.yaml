@@ -1,0 +1,80 @@
+name: TCC3420
+  
+tasks:
+
+# Tibtunnel Configure Profile and Verify Profile
+  - name: TCC3420_tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: TCC3420_verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}"
+
+# Deploy Tibcotunnelroute CR
+  - name: TCC3420_deployTibcoTunnelRouteCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCRWithoutConfig.yaml"
+       output: "./generated/tibcotunnelrouteCRWithoutConfig.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        # cmd: "kubectl"
+        # args: ["apply", "-f", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 1
+      - name: outerr
+        operator: containsStr
+       # value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field "config" in com.tibco.cloud.v1.TibcoTunnelRoute.spec.endpoint"
+        value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field"
+
+
+
+# Execution Output
+  - name: INFO_______________TCC-3420_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3420:TibcoTunnelRouteCR_deployment_without_spec.endpoint.configAndHash Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0

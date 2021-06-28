@@ -1,0 +1,199 @@
+name: TCC3414_onprem_fails_to_respond
+  
+tasks:
+
+# Tibtunnel Configure Profile and Verify Profile
+  - name: TCC3414_tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: TCC3414_verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}"
+
+# Deploy Tibcotunnelroute CR
+  - name: TCC3414_deployCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+
+# Deploy ClientAppn Deployments
+  - name: TCC3414_deployClientApp
+    type: foreground
+    templates: 
+      - input: "./resources/client-app.yaml"
+        output: "./generated/client-app.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        # cmd: "kubectl"
+        # args: ["apply", "-f", "./generated/client-app.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/client-app.yaml"]       
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# Status of Client Applications
+  - name: TCC3414_status_of-clientAppn
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        # cmd: "kubectl"
+        # args: ["get", "pods", "-n", "${NAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        cmd: "${ENV.fnSh}"
+        args: ["getPodNamesUsingSelector", "${NAMESPACE_TENANT}", "app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: 6
+      until: success
+      sleep: 5s  
+
+# TibcoTunnel COnnect
+  - name: TCC3414_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3414" ]
+
+
+# Start On-Prem Appn with IP-Address
+  - name: TCC3414_startOnpremAppn
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 20s ./tcp-server -d -a ${IP}:${ONPREMISE_PORT} >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# sleep
+  - name: TCC3414_sleepCommands
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
+# Communication b/w ClientPod and On-Prem Appn by sending Data
+  - name: TCC3414_sendData
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC3414_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}" ]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: stderr
+        operator: containsStr
+        operator: containsStr
+        value: "connection refused"
+
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s 
+
+  - name: TCC3413_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["65"]
+ 
+#######################################################Check VAlidation part only once! 
+
+#######################################################
+#######################################################
+# Execution Output
+  - name: INFO_______________TCC-3414_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3414:Validate_communication_when_onprem_application_failure Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
