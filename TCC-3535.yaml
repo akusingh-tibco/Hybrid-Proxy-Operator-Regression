@@ -1,4 +1,4 @@
-name: Sanity_SingleDeploymentwithDataTransfer_With_localhst
+name: Sanity_SingleDeploymentwithDataTransfer_With
 
 tasks: 
 
@@ -62,6 +62,23 @@ tasks:
         operator: equal
         value: 0
 
+# tibtunnel configuration
+  - name: TCC-3421_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+
 # Status of Client Applications
   - name: status_of-clientAppn
     type: foreground
@@ -99,12 +116,12 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2}  https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
   - name: checkTunnelStatus
     type: foreground
-    timeout: 20s
+    timeout: 30s
     exec:
       script:
         #cmd: "kubectl"
@@ -126,12 +143,12 @@ tasks:
         operator: containsStr
         value: "Tunnel is connected"
     repeat:
-      count: 3
+      count: 2
       until: success
-      sleep: 20ms  
+      sleep: 13s  
 
-# Start On-Prem Appn
-  - name: startOnpremAppn
+# Start On-Prem Appn 1
+  - name: startOnpremAppn1
     type: background
     exec:
       script:
@@ -155,10 +172,8 @@ tasks:
     exec:
       timeout: 30s
       script:
-        #cmd: "kubectl"
-        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}" ]
+        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}"]
         capture:
           stdout:
             - name: output
@@ -173,7 +188,60 @@ tasks:
     repeat:
       count: 3
       until: success
-      sleep: 2s 
+      sleep: 2s
+ 
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+
+# Start On-Prem Appn 2
+  - name: startOnpremAppn
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 30s ./tcp-server -d -a ${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2} >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+
+# Communication b/w ClientPod and On-Prem Appn by sending Data 2
+  - name: sendData
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${CONTAINER_PORT}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+
   - name: sleepCommand
     type: foreground
     exec:
@@ -189,8 +257,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
     expect:
@@ -204,8 +270,6 @@ teardown:
     exec: 
       timeout: 1m
       script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
         args: ["deleteResourse", "./generated/client-app.yaml"]
     expect:

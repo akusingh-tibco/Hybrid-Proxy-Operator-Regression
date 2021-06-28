@@ -1,0 +1,32 @@
+name: TCC-3398_Check_For_HPO_in_Running
+
+tasks: 
+
+# If Hybrid-Proxy-Operator is not present in the cluster, First bring them up in the cluster.
+# Check if there are Hybrid-Proxy-Operator Pod and check for status of each POD and capture name
+  - name: TCC-3398_Check_For_HPO
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        cmd: "kubectl"
+        args: ["get", "po", "-n${NAMESPACE_SYSTEM}", "-l", "app.kubernetes.io/name=hybrid-proxy", "-ojson"]
+        capture:
+          stdout:
+            - name: state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: HPO_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: state
+        operator: containsStr
+        value: "Running"
+      - name: state
+        operator: notContainsStr
+        value: "Pending"
+    repeat:
+      count: 5
+      until: success 
+      sleep: 10s

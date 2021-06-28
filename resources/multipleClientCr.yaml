@@ -1,0 +1,91 @@
+#  $> ./tibtunnel configure -a "j0v2fMbjekUjrXttVQrViLLW/KJwjIsy4iTSbCs2cTI" 
+#  $> ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://tunnel.local.tcieapps.pro/tcp-client
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: ${META_DATA_NAME}
+  namespace: ${NAMESPACE_TENANT}
+spec:
+  selector:
+    tunnel.cloud.tibco.com/accessKeyId: accessKeyId1
+  endpoint:
+    path: /${ENDPOINT}               
+    fqdn: ${FQDN}
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "${suite.setup.secretKey_hashKey.accesshash}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${DEPLOYMENT_NAME}
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: ${DEPLOYMENT_NAME}
+    app.cloud.tibco.com/owner: local
+spec:
+  selector:
+    matchLabels:
+      app: http
+      app.kubernetes.io/name: ${DEPLOYMENT_NAME}
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: http
+        app.kubernetes.io/name: ${DEPLOYMENT_NAME}
+        app.cloud.tibco.com/owner: local
+        app.cloud.tibco.com/tunnel: enabled
+        tunnel.cloud.tibco.com/accessKeyId: accessKeyId1
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: container-agent
+          image: ${CONTAINER_AGENT_IMAGE}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          resources: {}       # TODO: request actual resources here
+        - name: main
+          image: ${CLIENT_CONTAINER}
+          resources: {}       # TODO: request actual resources here
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${DEPLOYMENT_NAME_M}
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: ${DEPLOYMENT_NAME_M}
+    app.cloud.tibco.com/owner: local
+spec:
+  selector:
+    matchLabels:
+      app: http
+      app.kubernetes.io/name: ${DEPLOYMENT_NAME_M}
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: http
+        app.kubernetes.io/name: ${DEPLOYMENT_NAME_M}
+        app.cloud.tibco.com/owner: local
+        app.cloud.tibco.com/tunnel: enabled
+        tunnel.cloud.tibco.com/accessKeyId: accessKeyId1
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: container-agent
+          image: ${CONTAINER_AGENT_IMAGE}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          resources: {}       # TODO: request actual resources here
+        - name: main
+          image: ${CLIENT_CONTAINER}
+          resources: {}       # TODO: request actual resources here
+
