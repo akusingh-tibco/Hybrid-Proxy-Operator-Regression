@@ -85,6 +85,18 @@ function getResources(){
     kubectl get ${resourseName} -n ${namespace} -o json
 }
 
+function configureProfile(){
+    accessKeyHash=$1
+    /bin/bash -c ./tibtunnel configure -a accessKeyHash
+        #cmd: "/bin/bash"
+        #args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+}
+
+function verifyProfile(){
+    /bin/bash -c cat ~/.tibtunnel/credentials
+    #cmd: "/bin/bash"
+    #args: ["-c", "cat ~/.tibtunnel/credentials"]
+}
 function dataTrans(){
     input params - host,port from callinf TASK
     exec pods   

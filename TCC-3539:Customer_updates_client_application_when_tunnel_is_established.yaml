@@ -8,8 +8,10 @@ tasks:
     exec:
       timeout: 5s
       script:
-        cmd: "/bin/bash"
-        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        #cmd: "/bin/bash"
+        #args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        cmd: "${ENV.fnSh}"
+        args: ["configureProfile", "${suite.setup.secretKey_hashKey.accesskey}"]
         capture:
           stdout:
             - name: output
@@ -24,8 +26,10 @@ tasks:
     exec:
       timeout: 15s
       script:
-        cmd: "/bin/bash"
-        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        cmd: "${ENV.fnSh}"
+        args: ["verifyProfile"]
+        #cmd: "/bin/bash"
+        #args: ["-c", "cat ~/.tibtunnel/credentials"]
         capture:
           stdout:
             - name: output
@@ -59,22 +63,23 @@ tasks:
        value: 0
 
 # Deploy ClientAppn Deployments
-  - name: TCC3539_deployClientApp
+  - name: TCC3539_deployClientAppOldVersion
     type: foreground
     templates: 
-      - input: "./resources/client-app.yaml"
-        output: "./generated/client-app.yaml"
+      - input: "./resources/client-appUpdation.yaml"
+        output: "./generated/client-appUpdation.yaml"
     exec: 
       timeout: 2m
       script:
         # cmd: "kubectl"
         # args: ["apply", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
-        args: ["deployResourse", "./generated/client-app.yaml"]       
+        args: ["deployResourse", "./generated/client-appUpdation.yaml"]       
     expect:
       - name: status
         operator: equal
         value: 0
+
 
 # Status of Client Applications
   - name: TCC3539_status_of-clientAppn
@@ -115,7 +120,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 80s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3539" ]
+        args: ["-c", "timeout 100s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3539" ]
 
 # sleep
   - name: TCC3539_sleepCommand
@@ -125,19 +130,20 @@ tasks:
         cmd: "sleep"
         args: ["30"]
 
+
 # Deploy ClientAppn Deployments
-  - name: TCC3539_deployUpdatedClientApp
+  - name: TCC3539_deployClientAppLatestVersion
     type: foreground
     templates: 
-      - input: "./resources/client-appUpdation.yaml"
-        output: "./generated/client-appUpdation.yaml"
+      - input: "./resources/client-app.yaml"
+        output: "./generated/client-app.yaml"
     exec: 
       timeout: 2m
       script:
         # cmd: "kubectl"
         # args: ["apply", "-f", "./generated/client-app.yaml"]
         cmd: "${ENV.fnSh}"
-        args: ["deployResourse", "./generated/client-appUpdation.yaml"]       
+        args: ["deployResourse", "./generated/client-app.yaml"]       
     expect:
       - name: status
         operator: equal

@@ -32,5 +32,5 @@ spec:
                 - NET_ADMIN
           resources: {}       # TODO: request actual resources here
         - name: main
-          image:  664529841144.dkr.ecr.us-west-2.amazonaws.com/stratosphere/tcp-client:55 #can we get this image name directly
+          image:  ${TEST_SERVICE}:52 #can we get this image name directly
           resources: {}       # TODO: request actual resources here

@@ -4,16 +4,14 @@ metadata:
   name: ${META_DATA_NAME}
   namespace: ${NAMESPACE_TENANT}
 spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
   env:
-    - name: TUNNEL_ENDPOINT_CONFIG
-      value: accesskey
     - name: FQDNEnv
       valueFrom:
         configMapKeyRef:
           name: cic-private-env    # name of the configmap (must be in the same namespace as CR's
           key: TENANT-X_TUNNEL_DNS_DOMAIN
-  selector:
-    app.kubernetes.io/name: tcp-client
   endpoint:
     path: /${ENDPOINT}             
     fqdn: ${FQDNEnv}
