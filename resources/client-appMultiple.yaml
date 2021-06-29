@@ -30,7 +30,7 @@ spec:
             capabilities:
               add:
                 - NET_ADMIN
-          resources: {}       # TODO: request actual resources here
+          resources: {}       # TODO: request actual resources here.
         - name: main
           image: ${CLIENT_CONTAINER}
           resources: {}       # TODO: request actual resources here

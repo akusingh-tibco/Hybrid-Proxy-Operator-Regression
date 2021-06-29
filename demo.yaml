@@ -1,0 +1,58 @@
+name: TCC-35xx_DataTransfer_MultipleClientApps
+
+tasks: 
+
+# HPO Pod name
+  - name: HPOPodName
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-l", "app.kubernetes.io/name=hybrid-proxy","-n", "aws-compute-tibco-system", "-o", "json"]
+        #kubectl get pods -l app.kubernetes.io/name=hybrid-proxy -n aws-compute-tibco-system
+        capture: 
+          stdout: 
+            - name : HPOPodName
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: HPOPodName
+        operator: containsStr
+        value: "hybrid-proxy"
+
+# Scaling up client applications 
+  - name: scaleUp_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=1","hybrid-proxy","-n", "aws-compute-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+
+
+    #     capture:
+    #       stdout:
+    #         - name: running_state
+    #           matchType: jsonpath
+    #           match: "{.items[*].status.phase}"
+    #         - name: capture_pod_name
+    #           matchType: jsonpath
+    #           match: "{.items[0].metadata.name}"
+    # expect:
+    #   - name: status
+    #     operator: equal
+    #     value: 0
+    #   - name: running_state
+    #     operator: contains
+    #     value: "Running"
+    #   - name: running_state
+    #     operator: notContains
+    #     value: "Pending"

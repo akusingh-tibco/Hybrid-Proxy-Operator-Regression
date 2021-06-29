@@ -8,10 +8,10 @@ tasks:
     exec:
       timeout: 5s
       script:
-        #cmd: "/bin/bash"
-        #args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
-        cmd: "${ENV.fnSh}"
-        args: ["configureProfile", "${suite.setup.secretKey_hashKey.accesskey}"]
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        # cmd: "${ENV.fnSh}"
+        # args: ["configureProfile", "${suite.setup.secretKey_hashKey.accesskey}"]
         capture:
           stdout:
             - name: output
@@ -26,10 +26,10 @@ tasks:
     exec:
       timeout: 15s
       script:
-        cmd: "${ENV.fnSh}"
-        args: ["verifyProfile"]
-        #cmd: "/bin/bash"
-        #args: ["-c", "cat ~/.tibtunnel/credentials"]
+        # cmd: "${ENV.fnSh}"
+        # args: ["verifyProfile"]
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
         capture:
           stdout:
             - name: output
@@ -39,7 +39,7 @@ tasks:
         operator: containsStr
         value: "${suite.setup.secretKey_hashKey.accesskey}"
 
-# Deploy Tibcotunnelroute CR
+# Deploy Tibcotunnelroute CR.
   - name: TCC3539_deployCR
     type: foreground
     templates:
@@ -148,7 +148,13 @@ tasks:
       - name: status
         operator: equal
         value: 0
-
+# sleep
+  - name: TCC3539_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
 # Status of Client Applications
   - name: TCC3539_status_of-clientAppn
     type: foreground
@@ -182,13 +188,7 @@ tasks:
       until: success
       sleep: 5s 
 
-# sleep
-  - name: TCC3539_sleepCommand
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["30"]
+
 
 # Tibtunnel logs for 
   - name: TCC3479_tibtunnelLogValidate
@@ -197,7 +197,7 @@ tasks:
       script:
         cmd: "/bin/bash"
        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
-        args: ["-c", "cat $PWD/tibtunnelLog-3539 | grep 'closing tunnel (WS connection)' "]  
+        args: ["-c", "cat $PWD/tibtunnelLog-3539 | grep 'REMOVE_TAP' "]  
         capture:
           stdout:
             - name: closeTunnelOutput
@@ -208,7 +208,12 @@ tasks:
         value: 0
       - name: closeTunnelOutput
         operator: containsStr
-        value: "closing tunnel (WS connection)"
+        value: "REMOVE_TAP"
+    repeat:
+      count: 6
+      until: success
+      sleep: 2s
+
 # Tibtunnel logs for 
   - name: TCC3479_tibtunnelLogValidate2
     type: foreground
@@ -216,7 +221,7 @@ tasks:
       script:
         cmd: "/bin/bash"
        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
-        args: ["-c", "cat $PWD/tibtunnelLog-3539 | grep 'tunnel created (WS connection)' "]  
+        args: ["-c", "cat $PWD/tibtunnelLog-3539 | grep 'ADD_TAP' "]  
         capture:
           stdout:
             - name: closeTunnelOutput1
@@ -228,7 +233,11 @@ tasks:
         value: 0
       - name: closeTunnelOutput1
         operator: containsStr
-        value: "tunnel created (WS connection)"
+        value: "ADD_TAP"
+    repeat:
+      count: 6
+      until: success
+      sleep: 2s
 
   - name: TCC3539_sleepCommand
     type: foreground

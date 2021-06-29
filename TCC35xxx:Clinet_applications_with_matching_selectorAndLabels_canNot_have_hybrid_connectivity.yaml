@@ -1,0 +1,222 @@
+name: TCC-35xxx_DataTransfer_MultipleClientApps
+
+tasks: 
+
+# Deploy MultipleClientApp_yaml
+  - name: TCC-35xxx_deployCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+
+# Status of Tibcotunneroute CR
+  - name: TCC-35xxx_tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+# Deploy MultipleClientApp_yaml
+  - name: TCC-35xxx_deployCR
+    type: foreground
+    templates:
+     - input: "./resources/client-appNamespaceDiff.yaml"
+       output: "./generated/client-appNamespaceDiff.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/client-appNamespaceDiff.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+
+# tibtunnel configuration
+  - name: TCC-35xxx_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+
+# Status of Client Applications
+  - name: TCC-35xxx_status_of-clientAppn
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        #cmd: "${ENV.fnSh}"
+        #args: ["getPodNamesUsingSelector", "${NAMESPACE_TENANT_NEW}", "app=http"]
+        #  kubectl get pods -n ${namespaceTenant} -o json --selector=${selectorCriteria}
+        cmd: "kubectl"
+        args: ["get", "pods", "-n", "${NNAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: 10
+      until: success
+      sleep: 20s  
+
+# Tibtunnel Connect
+  - name: TCC-35xxx_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-35xxxx" ]
+
+  - name: TCC35xxx_sleepCommandafterTunnelConnectCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: TCC-35xxx_checkTunnelStatus
+    type: foreground
+    timeout: 20s
+    exec:
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["checkTunnelStatus","${TCC-35xxx_status_of-clientAppn.capture_pod_name}","${NNAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":false"
+      - name: output
+        operator: notContainsStr
+        value: "true"
+      - name: output
+        operator: containsStr
+        value: "No tunnel is connected"
+    repeat:
+      count: 3
+      until: success
+      sleep: 20ms  
+
+
+
+  - name: TCC35xxx_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+
+
+
+  - name: TCC35xxx_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
+
+###validate Tibtunnel logs as well
+################################################################
+################################################################
+
+teardown: 
+
+# Delete the multipleClientCr
+  - name: TCC-35xxx_delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 10s
+   
+# Delete the Updated CR
+  - name: TCC-35xxx_delete_updated_client_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/client-appNamespaceDiff.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 10s

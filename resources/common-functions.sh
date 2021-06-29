@@ -87,13 +87,15 @@ function getResources(){
 
 function configureProfile(){
     accessKeyHash=$1
-    /bin/bash -c ./tibtunnel configure -a accessKeyHash
+   # /bin/bash -c ./tibtunnel configure -a accessKeyHash
+    ./tibtunnel configure -a accessKeyHash
         #cmd: "/bin/bash"
         #args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
 }
 
 function verifyProfile(){
-    /bin/bash -c cat ~/.tibtunnel/credentials
+    cat ~/.tibtunnel/credentials
+   # /bin/bash -c cat ~/.tibtunnel/credentials
     #cmd: "/bin/bash"
     #args: ["-c", "cat ~/.tibtunnel/credentials"]
 }
