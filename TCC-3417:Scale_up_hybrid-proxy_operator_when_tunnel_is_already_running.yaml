@@ -219,7 +219,7 @@ tasks:
         cmd: "sleep"
         args: ["30"]
 # Scaling up client applications 
-  - name: TCC-3417_scaleDown_HPO
+  - name: TCC-3417_scaleDownToOne_HPO
     type: foreground
     timeout: 1m
     exec:

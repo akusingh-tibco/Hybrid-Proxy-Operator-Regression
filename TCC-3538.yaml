@@ -1,0 +1,157 @@
+name: TCC-3538
+
+tasks: 
+#TCC-3538_:AccessKeySecret deletion does not impact existing tunnel connection
+#Deploy CR file ===== included above in task at line 10
+  - name: TCC-3538_deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/singleDeploy.yaml"
+        output: "./generated/singleDeploy3392.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/singleDeploy3392.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+#tibtunnel configuration
+  - name: TCC-3538_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+# Status tibcotunnelroute specific
+  - name: TCC-3538_state_of_tibcotunnelroute
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+
+
+# Status of Pods
+  - name: TCC-3538_status_of_all_client-pods
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-n", "${NAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: -1
+      until: success 
+      sleep: 20ms  
+
+
+# Start tibtunnel 
+  - name: TCC-3538_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 40s ./tibtunnel connect -d --remote-debug -s 8083:localhost:8083 https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+
+# tibtunnel update accesskey
+  - name: TCC-3538_tibTunnelConfigureUpdateAccessKey
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}Update"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["10"]
+# Tunnel Status after deletion of AcessSecretSavedb/w tibtunnel and Client App 
+  - name: TCC-3538_checkTunnelStatusAfterSecretUpdation
+    type: foreground
+    exec:
+      script:
+        cmd: "kubectl"
+        args: ["exec", "${status_of_all_client-pods.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+  - name: TCC-3538_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["35"]
+
+# test case completion
+  - name: info----------------------------------------TCC-3537-Complete
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["-e", "."]
+    expect:
+      - name: status
+        operator: equal
+        value: 0

@@ -17,7 +17,7 @@ setup:
 # AccessKeyHash and AccessSecretkey generation
 
 
-
+#TCC-3386
 # Deploy test-service as Intercom-Client
   - name: deployIntercomClient
     type: foreground
@@ -68,6 +68,19 @@ setup:
             - name: accesshash
               matchType: jsonpath
               match: "{.accessKeyHash}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# Test Execution Completion
+  - name: INFO_______________TCC-3386_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3386 Executed Successfully"]
     expect:
       - name: status
         operator: equal
