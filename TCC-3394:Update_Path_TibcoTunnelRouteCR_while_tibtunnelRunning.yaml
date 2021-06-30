@@ -1,0 +1,219 @@
+name: TCC_3394_Update_Path_TibcoTunnelRouteCR_while_tibtunnelRunning
+
+
+env:
+  WRONGPATH: dxgdfghggfhjhgmjkjhggbc
+  WRONGENDPOINT: tcp-client7
+
+
+tasks: 
+
+# Tibtunnel Configure Profile and Verify Profile
+  - name: TCC_3394_tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}"
+
+# Deploy Tibcotunnelroute CR
+  - name: TCC_3394_tibcotunnelroute-status-withFunctions
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 30s
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0    
+# Status of Tibcotunneroute CR
+  - name: TCC_3394_tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+
+# tibtunnelConnect
+  - name: TCC_3394_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3394" ]
+  - name: sleepCommands
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["30"]
+
+# Tibtunnel logs for PING/PONG with correct Path Validation
+  - name: TCC_3394_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog | grep -E ') PING|) PONG'"]  
+        capture:
+          stdout:
+            - name: pingoutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: pingoutput
+        operator: containsStr
+        value: "PONG"
+      - name: pingoutput
+        operator: containsStr
+        value: "PING"    
+
+# deploy TibcoTunnelRoute CRWrongPath
+  - name: TCC_3394_tibcotunnelroute-status-withFunctions
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCRWrongPath.yaml"
+       output: "./generated/tibcotunnelrouteCRWrongPath.yaml"
+    exec: 
+     timeout: 2m
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCRWrongPath.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0
+# validating logs closing tunnel (WS connection) 
+# Tibtunnel logs for 
+  - name: TCC_3394_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3394 | grep 'closing tunnel (WS connection)' "]  
+        capture:
+          stdout:
+            - name: closeTunnelOutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: closeTunnelOutput
+        operator: containsStr
+        value: "closing tunnel (WS connection)"
+# Tibtunnel logs for 
+  - name: TCC_3394_tibtunnelLogValidate2
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3394 | grep 'unexpected status'|grep '404' "]  
+        capture:
+          stdout:
+            - name: closeTunnelOutput1
+              match: "((?s).*)"
+              matchType: regexp
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: closeTunnelOutput1
+        operator: containsStr
+        value: "unexpected status '404' for tunnel connectURL"
+  - name: sleepComm
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["100"]
+
+teardown:
+
+# Delete tibcocunnelroute CR
+  - name: delete_TibcoTunnelRouteCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# Delete tibcocunnelroute CR
+  - name: delete_TibcoTunnelRouteCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCRWrongPath.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
