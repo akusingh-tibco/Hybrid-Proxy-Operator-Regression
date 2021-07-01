@@ -1332,7 +1332,6 @@ tasks:
      - name: status
        operator: equal
        value: 0
-
 # Status of Tibcotunneroute CR
   - name: TCC-3411_tibcotunnelroute-status
     type: foreground
@@ -1353,7 +1352,6 @@ tasks:
       - name: status_cr
         operator: containsStr
         value: "processed"
-
 # Status of Client Applications
   - name: TCC-3411_status_of-clientAppn
     type: foreground
@@ -1384,7 +1382,6 @@ tasks:
       count: 10
       until: success
       sleep: 20s  
-
 # Tibtunnel Connect
   - name: TCC-3411_tibtunnelConnect
     type: background
@@ -1399,34 +1396,32 @@ tasks:
       script:
         cmd: "sleep"
         args: ["10"]
-
-# Tunnel Status b/w tibtunnel and Client App 
-  - name: TCC-3411_checkTunnelStatus
-    type: foreground
-    timeout: 20s
-    exec:
-      script:
-        cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${TCC-3411_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
-        capture:
-          stdout: 
-            - name: output
-              match: "((?s).*)"          
-    expect:
-      - name: output
-        operator: containsStr
-        value: "\"isConnected\":true"
-      - name: output
-        operator: notContainsStr
-        value: "false"
-      - name: output
-        operator: containsStr
-        value: "Tunnel is connected"
-    repeat:
-      count: 3
-      until: success
-      sleep: 20ms  
-
+# # Tunnel Status b/w tibtunnel and Client App 
+#   - name: TCC-3411_checkTunnelStatus
+#     type: foreground
+#     timeout: 20s
+#     exec:
+#       script:
+#         cmd: "${ENV.fnSh}"
+#         args: ["checkTunnelStatus","${TCC-3411_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+#         capture:
+#           stdout: 
+#             - name: output
+#               match: "((?s).*)"          
+#     expect:
+#       - name: output
+#         operator: containsStr
+#         value: "\"isConnected\":true"
+#       - name: output
+#         operator: notContainsStr
+#         value: "false"
+#       - name: output
+#         operator: containsStr
+#         value: "Tunnel is connected"
+#     repeat:
+#       count: 3
+#       until: success
+#       sleep: 20ms  
 # Deploy MultipleClientApp_yaml
   - name: TCC-3411_deployCR
     type: foreground
@@ -1456,7 +1451,6 @@ tasks:
       script:
         cmd: "sleep"
         args: ["40"]
-
 # Status of Client Applications
   - name: TCC-3411_status_of-clientAppnLatest
     type: foreground
@@ -1487,7 +1481,6 @@ tasks:
       count: 10
       until: success
       sleep: 20s  
-
 # Tunnel Status b/w tibtunnel and Client App 
   - name: TCC-3411_checkTunnelStatusLatest
     type: foreground
@@ -1514,11 +1507,9 @@ tasks:
       count: 3
       until: success
       sleep: 20ms  
-
 ###validate Tibtunnel logs as well
 ################################################################
 ################################################################
-
 #sleep
   - name: sleepCommand
     type: foreground
@@ -1538,7 +1529,22 @@ tasks:
       - name: status
         operator: equal
         value: 0
-
+# Delete the multipleClientCr
+  - name: TCC-3411_delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/multipleClientCr.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 10s
 # Deploy ClientAppn Deployments
   - name: deployClientApp
     type: foreground

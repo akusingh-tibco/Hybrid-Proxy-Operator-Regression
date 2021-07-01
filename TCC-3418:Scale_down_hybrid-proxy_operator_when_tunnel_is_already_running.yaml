@@ -198,7 +198,7 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["50"]
+        args: ["120"]
 # Tibtunnel logs for closing tunnel (WS connection)
   - name: TCC-3418_tibtunnelLogValidateCloseTunnel
     type: foreground
@@ -248,12 +248,7 @@ tasks:
         operator: containsStr
         value: "2"
 
-  - name: TCC-3418_sleepCommand
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["30"]
+
 
 teardown: 
 

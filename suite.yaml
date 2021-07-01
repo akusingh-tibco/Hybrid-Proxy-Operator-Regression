@@ -87,3 +87,124 @@ setup:
         value: 0
 
 teardown:
+
+  #DeleteMUltiDeployment If any################################
+  ################################
+  ################################
+  
+# Delete TIbcoTunnelRoute CR
+  - name: delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        #cmd: "kubectl"
+        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 7
+      until: success
+      sleep: 5s  
+
+# Delete the ClientApp Deployments
+  - name: delete_yaml_file
+    type: foreground
+    exec: 
+      timeout: 1m
+      script:
+        #cmd: "kubectl"
+        #args: ["delete", "-f", "./generated/client-app.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deleteResourse", "./generated/client-app.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+    repeat:
+      count: 3
+      until: success
+      sleep: 5ms
+
+# Verify Tibcotunneroute CR Deletion
+  - name: confirm_deletionCR
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        #cmd: "kubectl"
+        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: confirm_deleteCR
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_deleteCR
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+    repeat:
+      count: 5
+      until: success
+      sleep: 5s 
+
+# Verify ClientApp Deployments deletion
+  - name: confirm_deletionA
+    type: foreground
+    timeout: 1m
+    exec: 
+      script: 
+        #cmd: "kubectl"
+        #args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        cmd: "${ENV.fnSh}"
+        args: ["getResources", "deploy", "${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: confirm_deleteA
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_deleteA
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+    repeat:
+      count: 7
+      until: success
+      sleep: 5s  
+
+# Verify client-pod deletion
+  - name: confirm_client-pod_deletee
+    type: foreground
+    timeout: 1m
+    exec: 
+      script: 
+        cmd: "kubectl"
+        args: ["get", "po", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture:
+          stdout: 
+            - name: confirm_client-podd
+              matchType: jsonpath
+              match: "{.items[*].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: confirm_client-podd
+        operator: notContainsStr
+        value: "${META_DATA_NAME}"
+    repeat:
+      count: 12
+      until: success
+      sleep: 5s  
