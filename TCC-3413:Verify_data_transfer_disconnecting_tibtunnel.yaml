@@ -190,3 +190,4 @@ tasks:
       - name: status
         operator: equal
         value: 0
+
