@@ -1751,9 +1751,6 @@ tasks:
         value: 0
 
 
-
-
-
 #############Keep This at last###################
 #TCC-3393:Delete_the_TibcoTunnelRoute_CR_while_tibtunnel_is_running
 # Tibtunnel Connect
@@ -1862,21 +1859,21 @@ teardown:
 #       until: success
 #       sleep: 5s
 
-# Delete the ClientApp Deployments
-  - name: delete_yaml_file
-    type: foreground
-    timeout: 1m
-    exec: 
-      script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/client-app.yaml"]
-        cmd: "${ENV.fnSh}"
-        args: ["deleteResourse", "./generated/client-app.yaml"]
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-    repeat:
-      count: 7
-      until: success
-      sleep: 5s
+# # Delete the ClientApp Deployments
+#   - name: delete_yaml_file
+#     type: foreground
+#     timeout: 1m
+#     exec: 
+#       script:
+#         #cmd: "kubectl"
+#         #args: ["delete", "-f", "./generated/client-app.yaml"]
+#         cmd: "${ENV.fnSh}"
+#         args: ["deleteResourse", "./generated/client-app.yaml"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+#     repeat:
+#       count: 7
+#       until: success
+#       sleep: 5s

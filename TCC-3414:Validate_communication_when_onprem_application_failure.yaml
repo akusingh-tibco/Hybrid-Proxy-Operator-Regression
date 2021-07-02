@@ -163,7 +163,7 @@ tasks:
     expect:
       - name: status
         operator: equal
-        value: 0
+        value: 1
       - name: stderr
         operator: containsStr
         value: "connection refused"
