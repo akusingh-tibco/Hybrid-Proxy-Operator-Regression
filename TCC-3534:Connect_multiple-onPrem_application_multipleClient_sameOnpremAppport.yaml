@@ -92,9 +92,12 @@ tasks:
             - name: running_state
               matchType: jsonpath
               match: "{.items[*].status.phase}"
-            - name: capture_pod_name
+            - name: capture_pod_name1
               matchType: jsonpath
               match: "{.items[0].metadata.name}"
+            - name: capture_pod_name2
+              matchType: jsonpath
+              match: "{.items[1].metadata.name}"
     expect:
       - name: status
         operator: equal
@@ -119,13 +122,40 @@ tasks:
         args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT}  https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
-  - name: TC-3534_checkTunnelStatus
+  - name: TC-3534_checkTunnelStatusPod1
     type: foreground
     timeout: 30s
     exec:
       script:
         cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        args: ["checkTunnelStatus","${TC-3534_status_of-clientAppn.capture_pod_name1}","${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+      - name: output
+        operator: containsStr
+        value: "Tunnel is connected"
+    repeat:
+      count: 2
+      until: success
+      sleep: 13s  
+
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: TC-3534_checkTunnelStatusPod2
+    type: foreground
+    timeout: 30s
+    exec:
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["checkTunnelStatus","${TC-3534_status_of-clientAppn.capture_pod_name2}","${NAMESPACE_TENANT}"]
         capture:
           stdout: 
             - name: output
@@ -146,7 +176,7 @@ tasks:
       sleep: 13s  
 
 # Start On-Prem Appn 1
-  - name: TC-3534_startOnpremAppn
+  - name: TC-3534_startOnpremAppn1
     type: background
     exec:
       script:
@@ -165,13 +195,13 @@ tasks:
         value: "TCP server started"
 
 # Communication b/w ClientPod and On-Prem Appn by sending Data
-  - name: TC-3534_sendData
+  - name: TC-3534_sendData1
     type: foreground
     exec:
       timeout: 30s
       script:
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "-s 10" ]
+        args: ["dataTransferToOnpremApp", "${TC-3534_status_of-clientAppn.capture_pod_name1}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "-s 10" ]
         capture:
           stdout:
             - name: output
@@ -196,7 +226,7 @@ tasks:
         args: ["40"]
 
 # Start On-Prem Appn 2
-  - name: TC-3534_startOnpremAppn
+  - name: TC-3534_startOnpremAppn2
     type: background
     exec:
       script:
@@ -215,13 +245,13 @@ tasks:
         value: "TCP server started"
 
 # Communication b/w ClientPod and On-Prem Appn by sending Data 2
-  - name: TC-3534_sendData
+  - name: TC-3534_sendData2
     type: foreground
     exec:
       timeout: 30s
       script:
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "-s 10" ]
+        args: ["dataTransferToOnpremApp", "${TC-3534_status_of-clientAppn.capture_pod_name2}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${CONTAINER_PORT}", "-s 10" ]
         capture:
           stdout:
             - name: output

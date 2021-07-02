@@ -119,7 +119,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 0s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
   - name: TCC-3424_checkTunnelStatus
@@ -186,13 +186,29 @@ tasks:
       - name: stderr
         operator: containsStr
         value: "Successfully send/received ${SIZEinKiB}.0KiB" 
+  # - name: sleepCommand
+  #   type: foreground
+  #   exec:
+  #     script:
+  #       cmd: "sleep"
+  #       args: ["70"]
+
+###nEW ADDED ##
+# sleep command  
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["70"]
+        args: ["30"]
 
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["90"]
 ########################################################################
 ################################################################
 ################################################################

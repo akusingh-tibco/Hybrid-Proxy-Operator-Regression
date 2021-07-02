@@ -166,7 +166,6 @@ tasks:
         value: 0
       - name: stderr
         operator: containsStr
-        operator: containsStr
         value: "connection refused"
 
     repeat:
@@ -174,7 +173,7 @@ tasks:
       until: success
       sleep: 2s 
 
-  - name: TCC3413_sleepCommand
+  - name: TCC3414_sleepCommand
     type: foreground
     exec:
       script:

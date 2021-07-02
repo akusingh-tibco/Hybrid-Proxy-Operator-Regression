@@ -91,27 +91,27 @@ teardown:
   #DeleteMUltiDeployment If any################################
   ################################
   ################################
-  
-# Delete TIbcoTunnelRoute CR
-  - name: delete_yaml_file
-    type: foreground
-    exec: 
-      timeout: 1m
-      script:
-        #cmd: "kubectl"
-        #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
-        cmd: "${ENV.fnSh}"
-        args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-    repeat:
-      count: 7
-      until: success
-      sleep: 5s  
 
-# Delete the ClientApp Deployments
+# # Delete TIbcoTunnelRoute CR
+#   - name: delete_yaml_file
+#     type: foreground
+#     exec: 
+#       timeout: 1m
+#       script:
+#         #cmd: "kubectl"
+#         #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
+#         cmd: "${ENV.fnSh}"
+#         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+#     repeat:
+#       count: 7
+#       until: success
+#       sleep: 5s  
+
+# # Delete the ClientApp Deployments
   - name: delete_yaml_file
     type: foreground
     exec: 
