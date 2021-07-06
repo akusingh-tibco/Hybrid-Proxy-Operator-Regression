@@ -119,7 +119,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 0s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 80s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
   - name: TCC-3424_checkTunnelStatus
@@ -193,25 +193,14 @@ tasks:
   #       cmd: "sleep"
   #       args: ["70"]
 
-###nEW ADDED ##
 # sleep command  
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["30"]
+        args: ["80"]
 
-
-  - name: sleepCommand
-    type: foreground
-    exec:
-      script:
-        cmd: "sleep"
-        args: ["90"]
-########################################################################
-################################################################
-################################################################
 
 teardown: 
 
