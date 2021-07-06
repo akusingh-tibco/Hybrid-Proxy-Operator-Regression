@@ -13,10 +13,10 @@ env:
 tasks: 
 
 # Sanity Covers 3499, 3415
-# Regression suite Covers 3386, 3383, 3387, 3398, 3419, 3407, 3420, 3384, 3533,
-#                         3385, 3395, 3394, 3392, 3537, 3483, 3479, 3410, 3539,
-#                         3393, 3400, 3414, 3413, 3534, 3541, 3424, 3425, 3427, 
-#                         3477, 35xx, 3421, 3411.
+# Regression suite Covers 3386, 3383, 3387, 3398, 3378, 3419, 3407, 3420, 3384, 3533,
+#                         3385, 3395, 3417, 3418, 3394, 3392, 3540, 3537, 3483, 3479,
+#                         3410, 3539, 3393, 3400, 3414, 3413, 3534, 3541, 3424, 3425, 
+#                         3427, 3477, 35xx, 3421, 3411.
 
 # TCC - 3383 Tibtunnel version ---- current version 2.3.1 and build 96
   - name: TCC-3383_tibtunnelVersion
@@ -149,6 +149,52 @@ tasks:
         operator: equal
         value: 0
 
+# TCC-3378 TibTunnel_Connect_without_deploying_TibcoTunnelRoute_CR
+# Tibtunnel Connect
+  - name: TCC_3378_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog3378" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["25"]
+# Tibtunnel Validate
+  - name: TCC_3378_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog3378 | grep 'unexpected status'|grep '404' "]  
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: output
+        operator: containsStr
+        value: "unexpected status"
+# Test Execution Completion
+  - name: INFO_______________TCC-3478_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3478 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
 
 #TCC-3419:TibcoTunnelRouteCR_deployment_without_spec.endpoint.config_tag
 # Deploy Tibcotunnelroute CR without config
@@ -564,6 +610,255 @@ tasks:
         operator: equal
         value: 0
 
+# TCC-3417
+# HPO Pod name
+  - name: TCC_3417_HPOPodName
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-l", "app.kubernetes.io/name=hybrid-proxy","-n", "${who}-tibco-system", "-ojson"]
+        #kubectl get pods -l app.kubernetes.io/name=hybrid-proxy -n aws-compute-tibco-system
+        capture: 
+          stdout: 
+            - name : HPOPodName
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+            - name: HPOState
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: HPOPodName
+        operator: containsStr
+        value: "hybrid-proxy"
+      # - name: HPOState
+      #   operator: containsStr
+      #   value: "Running"
+# Tibtunnel Connect
+  - name: TCC-3417_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3417" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["15"]
+# Scaling up client applications 
+  - name: TCC-3417_scaleUp_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=3","hybrid-proxy","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+
+  - name: TCC-3417_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+# Tibtunnel logs for closing tunnel (WS connection)
+  - name: TCC-3417_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3417 | grep 'closing tunnel (WS connection)' "]  
+        capture:
+          stdout:
+            - name: closeTunnelOutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 1
+      - name: closeTunnelOutput
+        operator: notContainsStr
+        value: "closing tunnel (WS connection)"
+  
+# Tibtunnel Validation for new connection count
+  - name: TCC-3417_tibtunnelLogValidateNoOfConnections
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3417 | grep -c 'tunnel created (WS connection)' "]  
+        capture:
+          stdout:
+            - name: TunnelCreationOutputCount
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: TunnelCreationOutputCount
+        operator: containsStr
+        value: "1"
+  - name: TCC-3417_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+# Test Execution Completion
+  - name: INFO_______________TCC-3417_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3417 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# # TCC-3418
+# # Tibtunnel Connect
+#   - name: TCC-3417_tibtunnelConnect
+#     type: background
+#     exec:
+#       script:
+#         cmd: "/bin/bash"
+#         args: ["-c", "timeout 200s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3418" ]
+
+#   - name: sleepCommand
+#     type: foreground
+#     exec:
+#       script:
+#         cmd: "sleep"
+#         args: ["30"]
+# # Delete the captured HPO Pod 
+#   - name: TCC-3418_delete_HPO
+#     type: foreground
+#     timeout: 1m
+#     exec:
+#       script: 
+#         cmd: "kubectl"
+#         args: ["delete", "pod", "${TCC_3417_HPOPodName.HPOPodName}","-n", "${who}-tibco-system"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0 
+#   - name: TCC-3418_sleepCommand
+#     type: foreground
+#     exec:
+#       script:
+#         cmd: "sleep"
+#         args: ["175"]
+# # Tibtunnel Validation closing tunnel (WS connection)
+#   - name: TCC-3418_tibtunnelLogValidateCloseTunnel
+#     type: foreground
+#     exec:
+#       script:
+#         cmd: "/bin/bash"
+#        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+#         args: ["-c", "cat $PWD/tibtunnelLog-3418 | grep 'closing tunnel (WS connection)' "]  
+#         capture:
+#           stdout:
+#             - name: closeTunnelOutput
+#               match: "((?s).*)"
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+#       - name: closeTunnelOutput
+#         operator: containsStr
+#         value: "closing tunnel (WS connection)"
+# # Tibtunnel logs for new connection count
+#   - name: TCC-3418_tibtunnelLogValidateNoOfConnections
+#     type: foreground
+#     exec:
+#       script:
+#         cmd: "/bin/bash"
+#        # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+#         args: ["-c", "cat $PWD/tibtunnelLog-3418 | grep -c 'tunnel created (WS connection)' "]  
+#         capture:
+#           stdout:
+#             - name: TunnelCreationOutputCount
+#               match: "((?s).*)"
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+#       - name: TunnelCreationOutputCount
+#         operator: containsStr
+#         value: "2"
+# # Bring back HPO instance to Default
+#   - name: TCC-3417_scaleDownToOne_HPO
+#     type: foreground
+#     timeout: 1m
+#     exec:
+#       script: 
+#         cmd: "kubectl"
+#         args: ["scale", "deploy", "--replicas=1","hybrid-proxy","-n", "${who}-tibco-system"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0 
+# # Test Execution Completion
+#   - name: INFO_______________TCC-3418_____testcaseExecutionCompletion
+#     type: foreground
+#     exec:
+#       timeout: 5s
+#       script:
+#         cmd: "echo"
+#         args: ["TCC-3418 Executed Successfully"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+
+# Bring back HPO instance to Default
+  - name: TCC-3417_scaleDownToOne_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=1","hybrid-proxy","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+
+# Deploy CR file (Common single file for all test cases)
+  - name: TCC_deploy_yaml_file
+    type: foreground
+    templates: 
+      - input: "./resources/singleDeploy.yaml"
+        output: "./generated/singleDeployy.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/singleDeployy.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0  
+  - name: TCC-3418_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["25"]     
 
 # TCC-3394:Update 'Path' for TibcoTunnelRoute CR while tibtunnel is running
 # tibtunnelConnect
@@ -572,7 +867,7 @@ tasks:
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3394" ]
+        args: ["-c", "timeout 90s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3394" ]
   - name: sleepCommands
     type: foreground
     exec:
@@ -607,7 +902,7 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["40"]
+        args: ["70"]
 # validating  for closing tunnel (WS connection) 
   - name: TCC-3394_tibtunnelValidate
     type: foreground
@@ -778,6 +1073,155 @@ tasks:
       script:
         cmd: "echo"
         args: ["TCC-3392 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3540
+# Tibtunnel Configure Profile and Verify Profile
+  - name: TCC-3540_tibTunnelConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+
+  - name: TCC-3540_verifyProfileSaved
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}"
+# TibcoTunnel Connect
+  - name: TCC-3540_tibtunnelConnect1
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-34501" ]
+# sleep
+  - name: TCC3479_sleepCommands
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+# TibcoTunnel COnnect
+  - name: TCC-3540_tibtunnelConnect2
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-34502" ]
+# Start On-Prem Appn with IP-Address
+  - name: TCC-3540_startOnpremAppn
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 120s ./tcp-server -d -a ${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} >> ./tcpserverLog-3540"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# Communication b/w ClientPod and On-Prem Appn by sending Data
+  - name: TCC-3540_sendData1
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3392_status_of_all_client-pods.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}" ]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s 
+#sleep 
+  - name: TCC-3540_sleepCommand80s
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["80"]
+# Communication b/w ClientPod and On-Prem Appn by sending Data
+  - name: TCC-3540_sendData2
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3392_status_of_all_client-pods.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}" ]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s  
+# sleep 
+  - name: TCC3479_sleepCommands
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["120"]
+# Test Execution Completion
+  - name: INFO_______________TCC-3540_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3540 Executed Successfully"]
     expect:
       - name: status
         operator: equal
@@ -1587,9 +2031,6 @@ tasks:
         operator: equal
         value: 0
 
-#================================================================
-
-
 # TCC-3400
 # Tibtunnel Configure Profile and Verify Profile
   - name: TCC-3400_tibTunnelConfigureDefaultProfile
@@ -2389,8 +2830,20 @@ tasks:
       - name: stderr
         operator: containsStr
         value: "Successfully send/received ${SIZEinKiB}.0KiB" 
-
-#3425
+# Test Execution Completion
+  - name: INFO_______________TCC-3424_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 1s
+      script:
+        cmd: "echo"
+        args: ["TCC-3424 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+        
+# TCC-3425
 # Communication b/w ClientPod and On-Prem Appn by sending Data
   - name: TCC-3425_sendData
     type: foreground
@@ -2426,7 +2879,7 @@ tasks:
         operator: equal
         value: 0
 
-#3427
+# TCC-3427
 # Communication b/w ClientPod and On-Prem Appn by sending Data
   - name: TCC-3427_sendData
     type: foreground
@@ -2459,29 +2912,34 @@ tasks:
         operator: equal
         value: 0
 
-#3477
+# TCC-3477
 # Communication b/w ClientPod and On-Prem Appn by sending Data
-  - name: TCC-3477_sendData
+  - name: TCC_3477_sendData
     type: foreground
     exec:
-      timeout: 10s
       script:
-        cmd: "${ENV.fnSh}"
-        args: ["dataTransferNoOfConnctn", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${NoOfCnctn}" ]
+        cmd: "kubectl"
+        args: ["exec", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "-ncic20-prod-tibco-tenant-x","-c","main", "--", "/test/tcp-client", "-d", "-a", "localhost:8081", "-n", "3"]
         capture:
           stdout:
             - name: output
               match: "((?s).*)"
           stderr:
-            - name: stderr        #isme stederr 1 hi line pick kr rha hai
-              match: "((?s).*)"    
+            - name: stderr
+              match: "((?s).*)"              
     expect:
       - name: stderr
         operator: containsStr
-        value: "Successfully send/received ${NoOfCnctn}.0KiB" 
-      # - name: stderr
-      #   operator: contains
-      #   value: "[${NoOfCnctn}] Normal close of remote connection" 
+        value: "Successfully send/received 3.0KiB"
+      - name: stderr
+        operator: containsStr
+        value: "[id:3] Tx/Rx 1.0KiB in"
+      - name: stderr
+        operator: containsStr
+        value: "worker(1): complete"
+    repeat:
+      count: 0
+      sleep: 5s
 # Test Execution Completion
   - name: INFO_______________TCC-3477_____testcaseExecutionCompletion
     type: foreground
@@ -2500,6 +2958,414 @@ tasks:
       script:
         cmd: "sleep"
         args: ["100"]
+
+#3477
+# # Communication b/w ClientPod and On-Prem Appn by sending Data
+#   - name: TCC-3477_sendData
+#     type: foreground
+#     exec:
+#       timeout: 10s
+#       script:
+#         cmd: "${ENV.fnSh}"
+#         args: ["dataTransferNoOfConnctn", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${NoOfCnctn}" ]
+#         capture:
+#           stdout:
+#             - name: output
+#               match: "((?s).*)"
+#           stderr:
+#             - name: stderr        #isme stederr 1 hi line pick kr rha hai
+#               match: "((?s).*)"    
+#     expect:
+#       - name: stderr
+#         operator: containsStr
+#         value: "Successfully send/received ${NoOfCnctn}.0KiB" 
+#       # - name: stderr
+#       #   operator: contains
+#       #   value: "[${NoOfCnctn}] Normal close of remote connection" 
+
+# TCC-3535
+# tibtunnel configuration
+  - name: TCC-3535_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+# Status of Client Applications
+  - name: TCC_3535_status_of-clientAppn
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "${ENV.fnSh}"
+        args: ["getPodNamesUsingSelector", "${NAMESPACE_TENANT}", "app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+            - name: capture_pod_name2
+              matchType: jsonpath
+              match: "{.items[1].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: 10
+      until: success
+      sleep: 20s  
+# Tibtunnel Connect
+  - name: TCC_3535_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        #args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s 8081:${ONPREMISE_HOSTNAME}:8081 -s 8082:${ONPREMISE_HOSTNAME2}:8082   https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} -s ${CONTAINER_PORT2}:${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: checkTunnelStatus
+    type: foreground
+    timeout: 30s
+    exec:
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
+        cmd: "${ENV.fnSh}"
+        args: ["checkTunnelStatus","${TCC_3535_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+      - name: output
+        operator: containsStr
+        value: "Tunnel is connected"
+    repeat:
+      count: 2
+      until: success
+      sleep: 13s  
+# Start On-Prem Appn 1
+  - name: startOnpremAppn1
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 30s ./tcp-server -d -a ${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# Start On-Prem Appn 2
+  - name: startOnpremAppn2
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tcp-server -d -a ${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2} >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# Communication b/w ClientPod and On-Prem Appn by sending Data
+  - name: sendData1
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC_3535_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+# Communication b/w ClientPod and On-Prem Appn by sending Data 2
+  - name: sendData2
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        #cmd: "kubectl"
+        #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC_3535_status_of-clientAppn.capture_pod_name2}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${CONTAINER_PORT2}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["80"]
+# Test Execution Completion
+  - name: INFO_______________TCC-3535_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 1s
+      script:
+        cmd: "echo"
+        args: ["TCC-3535 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3536
+# tibtunnel configuration
+  - name: TCC-3536_tibTunnelConfigure
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]   
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "'default' was successfully saved"
+# Status of Client Applications
+  - name: TCC-3536_status_of-clientAppn
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "${ENV.fnSh}"
+        args: ["getPodNamesUsingSelector", "${NAMESPACE_TENANT}", "app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: 10
+      until: success
+      sleep: 20s  
+# Tibtunnel Connect
+  - name: TCC-3536_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 45s ./tibtunnel connect -d --remote-debug -s 8081:${ONPREMISE_HOSTNAME}:8081 -s 8082:${ONPREMISE_HOSTNAME2}:8082  https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: TCC-3536_checkTunnelStatus
+    type: foreground
+    timeout: 30s
+    exec:
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["checkTunnelStatus","${TCC-3536_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+      - name: output
+        operator: containsStr
+        value: "Tunnel is connected"
+    repeat:
+      count: 2
+      until: success
+      sleep: 13s  
+# Start On-Prem Appn 1
+  - name: TCC-3536_startOnpremAppn1
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 25s ./tcp-server -d -a ${ONPREMISE_HOSTNAME}:8081 >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# Start On-Prem Appn 2
+  - name: TCC-3536_startOnpremAppn2
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 25s ./tcp-server -d -a ${ONPREMISE_HOSTNAME2}:8082 >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+# Communication b/w ClientPod and On-Prem Appn by sending Data
+  - name: TCC-3536_sendData1
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3536_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:8081"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+  # - name: sleepCommand
+  #   type: foreground
+  #   exec:
+  #     script:
+  #       cmd: "sleep"
+  #       args: ["40"]
+# Communication b/w ClientPod and On-Prem Appn by sending Data 2
+  - name: TCC-3536_sendData2
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3536_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:8082"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["50"]
+# Test Execution Completion
+  - name: INFO_______________TCC-3536_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 1s
+      script:
+        cmd: "echo"
+        args: ["TCC-3536 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+
 
 # Partial Tear Down part 
 

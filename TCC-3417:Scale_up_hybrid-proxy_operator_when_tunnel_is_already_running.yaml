@@ -230,6 +230,8 @@ tasks:
       - name: status
         operator: equal
         value: 0 
+
+        
 teardown: 
 
 # Delete the Tibcotunneroute CR
