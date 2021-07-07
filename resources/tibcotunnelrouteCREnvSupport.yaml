@@ -1,0 +1,20 @@
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: ${META_DATA_NAME}
+  namespace: ${NAMESPACE_TENANT}
+spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
+  env:
+    - name: FQDNEnv
+      valueFrom:
+        configMapKeyRef:
+          name: cic-private-env    # name of the configmap (must be in the same namespace as CR's
+          key: TENANT-X_TUNNEL_DNS_DOMAIN
+  endpoint:
+    path: /${ENDPOINT}             
+    fqdn: ${FQDNEnv}
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "${suite.setup.secretKey_hashKey.accesshash}"

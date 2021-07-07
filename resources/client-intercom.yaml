@@ -1,0 +1,162 @@
+#
+# Description: A simple test for intercom rule enforcement
+#
+# Usage:
+#     kubectl exec -it -n cic20-prod-tibco-tcm intercom-client-UUUUU bash (replace UUUUU with correct value)
+#     curl -H X-Atmosphere-For-User:qa-user $TIBCO_INTERNAL_INTERCOM_URL/qa/intercom-server/intercom/echo/ok
+#          ====> expected 200
+#     curl -H X-Atmosphere-For-User:qa-user $TIBCO_INTERNAL_INTERCOM_URL/qa/intercom-server/intercom/echo/param?foo=bar
+#          ====> expected 200
+#     curl -H X-Atmosphere-For-User:qa-user $TIBCO_INTERNAL_INTERCOM_URL/qa/intercom-server/intercom/echo/denied
+#          ====> expected 403
+#
+# This file contains:
+#   intercom-server
+#      - TibcoDeployment
+#      - Service
+#      - TibcoRoute (exposing only intercom endpoints)
+#   intercom-client
+#      - TibcoDeployment
+#      - Service
+#      - TibcoIntercomRule
+#      - TibcoRoute (exposing public exec endpoint)
+---
+# deployment for application intercom-client
+apiVersion: cloud.tibco.com/v1
+kind: TibcoDeployment
+metadata:
+  name: intercom-client
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: intercom-client
+    app.cloud.tibco.com/owner: qa_tibco.com
+    app.kubernetes.io/component: test-infrastructure
+    app.kubernetes.io/part-of: qa-testing
+spec:
+  deployment:
+    replicas: 1
+    selector:
+      matchLabels:
+        app.kubernetes.io/name: intercom-client
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app.kubernetes.io/name: intercom-client
+          app.cloud.tibco.com/owner: qa_tibco.com
+          app.kubernetes.io/component: test-infrastructure
+          app.kubernetes.io/part-of: qa-testing
+      spec:
+        nodeSelector:
+          kubernetes.io/os: linux
+        containers:
+        - name: main
+          #image: reldocker.tibco.com/stratosphere/test-service:23 664529841144.dkr.ecr.us-west-2.amazonaws.com/stratosphere/hybrid-server:9
+          #image: 664529841144.dkr.ecr.us-west-2.amazonaws.com/stratosphere/test-service:latest
+          image: ${TEST_SERVICE}
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /echo/health
+              port: 8080
+            failureThreshold: 1
+            successThreshold: 1
+            timeoutSeconds: 3
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /echo/health
+              port: 8080
+            failureThreshold: 1
+            successThreshold: 1
+            timeoutSeconds: 3
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          resources: {}
+          env:
+          - name: DELAY_START
+            value: "0s"
+          - name: DELAY_STOP
+            value: "0s"
+          - name: REQUEST_READ_TIMEOUT
+            value: "0s"
+          - name: RESPONSE_WRITE_TIMEOUT
+            value: "0s"
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        terminationGracePeriodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: intercom-client
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: intercom-client
+spec:
+  ports:
+  - name: port-8080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: intercom-client
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: cloud.tibco.com/v1
+kind: TibcoRoute
+metadata:
+  name: intercom-client
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: intercom-client
+spec:
+  serviceName: intercom-client
+  endpoints:
+  - path: /qa/intercom-client/exec
+    protocol: http
+    port: 8080
+    internalPath: /exec
+    proxies:
+    - listener: virtual
+      config: insecure
+      fqdn: ${FQDN_DNS}
+      #TCMD_DNS_DOMAIN: metadata.local.cic2.pro
+      #fqdn: messaging.compute-dev.eu-west-1.tcie.pro  # can be anything which is deployed.  tenant
+  #          tds-tunnel.compute-dev.eu-west-1.tcie.pro
+---
+# allow appName "intercom-client" to access /mock/intercom/ok AND /mock/intercom/param?foo=bar
+apiVersion: cloud.tibco.com/v1
+kind: TibcoIntercomRule
+metadata:
+  name: intercom-client
+  namespace: ${NAMESPACE_TENANT}
+  labels:
+    app.kubernetes.io/name: intercom-client
+    app.cloud.tibco.com/owner: qa_tibco.com
+    app.kubernetes.io/component: test-infrastructure
+    app.kubernetes.io/part-of: qa-testing
+spec:
+  selector:
+    app.kubernetes.io/name: intercom-client
+  rules:
+  - path: /infra/accesskeys                    #only can be accesed through intercom when specific path/rule is specified

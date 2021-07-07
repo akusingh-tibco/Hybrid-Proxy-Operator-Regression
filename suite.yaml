@@ -1,0 +1,138 @@
+name: suite
+
+
+setup:
+# Cleaning up log files
+  - name: deleteLogFiles
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "/bin/bash"
+        args: ["-c", "rm -f -- $PWD/*Log*"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+# AccessKeyHash and AccessSecretkey generation
+
+
+# Clean the namesapace environtment
+  - name: delete_intercom_file
+    type: foreground
+    exec: 
+      timeout: 5m
+      script:
+        cmd: "kubectl"
+        args: ["delete", "all", "--all", "-n${NAMESPACE_TENANT}"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+#TCC-3386
+# Deploy test-service as Intercom-Client
+  - name: deployIntercomClient
+    type: foreground
+    templates: 
+      - input: "./resources/client-intercom.yaml"
+        output: "./generated/client-intercom.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/client-intercom.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# To Discover Intercom-client Pod
+  - name: getIntercomPod
+    type: foreground
+    exec:
+      timeout: 1m
+      script:
+        cmd: "kubectl"
+        args: ["get", "pods","-l", "app.kubernetes.io/name=intercom-client", "-n", "${NAMESPACE_TENANT}", "-ojson"]
+        capture:
+          stdout:
+            - name: IntPod
+              match: "{.items[*].metadata.name}"
+              matchType: jsonpath
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# AccessKeyHash and AccessSecretkey generation
+  - name: secretKey_hashKey
+    type: foreground  
+    exec:
+      timeout: 1m
+      script: 
+        cmd: "kubectl"
+        args: ["exec", "-n", "${NAMESPACE_TENANT}", "${suite.setup.getIntercomPod.IntPod}", "--", "curl", "-s", "-H", "X-Atmosphere-For-User:qa", "-X", "POST", "http://router.${NAMESPACE_SYSTEM}.svc.cluster.local:90/infra/accesskeys"]
+        capture:
+          stdout:
+            - name: accesskey
+              matchType: jsonpath
+              match: "{.accessKeySecret}"
+            - name: accesshash
+              matchType: jsonpath
+              match: "{.accessKeyHash}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# Test Execution Completion
+  - name: INFO_______________TCC-3386_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3386 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+teardown:
+
+  #DeleteMUltiDeployment If any################################
+  ################################
+  ################################
+
+# # Delete TIbcoTunnelRoute CR
+#   - name: delete_yaml_file
+#     type: foreground
+#     exec: 
+#       timeout: 1m
+#       script:
+#         #cmd: "kubectl"
+#         #args: ["delete", "-f", "./generated/tibcotunnelrouteCR.yaml"]
+#         cmd: "${ENV.fnSh}"
+#         args: ["deleteResourse", "./generated/tibcotunnelrouteCR.yaml"]
+#     expect:
+#       - name: status
+#         operator: equal
+#         value: 0
+#     repeat:
+#       count: 7
+#       until: success
+#       sleep: 5s  
+
+# Clean the namesapace environtment
+  - name: delete_intercom_file
+    type: foreground
+    exec: 
+      timeout: 5m
+      script:
+        cmd: "kubectl"
+        args: ["delete", "all", "--all", "-n${NAMESPACE_TENANT}"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0

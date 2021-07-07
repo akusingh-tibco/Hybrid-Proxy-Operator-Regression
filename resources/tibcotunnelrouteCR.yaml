@@ -1,0 +1,14 @@
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: ${META_DATA_NAME}
+  namespace: ${NAMESPACE_TENANT}
+spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
+  endpoint:
+    path: /${ENDPOINT}             
+    fqdn: ${FQDN}
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "${suite.setup.secretKey_hashKey.accesshash}"
