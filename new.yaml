@@ -12,11 +12,11 @@ env:
 
 tasks: 
 
-# Sanity Covers 3499, 3415
+# Sanity Covers 3499, 3415, 3685
 # Regression suite Covers 3386, 3383, 3387, 3398, 3378, 3419, 3407, 3420, 3384, 3533,
 #                         3385, 3395, 3417, 3418, 3394, 3392, 3540, 3537, 3483, 3479,
 #                         3410, 3539, 3393, 3400, 3414, 3413, 3534, 3541, 3424, 3425, 
-#                         3427, 3477, 35xx, 3421, 3411.
+#                         3427, 3477, 3535, 3536, 35xx, 3421, 3411.
 
 # TCC - 3383 Tibtunnel version ---- current version 2.3.1 and build 96
   - name: TCC-3383_tibtunnelVersion
@@ -902,7 +902,7 @@ tasks:
     exec:
       script:
         cmd: "sleep"
-        args: ["70"]
+        args: ["100"]
 # validating  for closing tunnel (WS connection) 
   - name: TCC-3394_tibtunnelValidate
     type: foreground
@@ -2815,7 +2815,7 @@ tasks:
   - name: TCC-3424_sendData
     type: foreground
     exec:
-      timeout: 10s
+      timeout: 30s
       script:
         cmd: "${ENV.fnSh}"
         args: ["dataTransferwithSIZE", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${SIZEinKiB}" ]
@@ -2848,7 +2848,7 @@ tasks:
   - name: TCC-3425_sendData
     type: foreground
     exec:
-      timeout: 10s
+      timeout: 30s
       script:
         cmd: "${ENV.fnSh}"
         args: ["dataTransferNoOfItr", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${NoOfItr}" ]
@@ -2919,7 +2919,7 @@ tasks:
     exec:
       script:
         cmd: "kubectl"
-        args: ["exec", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "-ncic20-prod-tibco-tenant-x","-c","main", "--", "/test/tcp-client", "-d", "-a", "localhost:8081", "-n", "3"]
+        args: ["exec", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "-n${who}-tibco-tenant-x","-c","main", "--", "/test/tcp-client", "-d", "-a", "localhost:8081", "-n", "3"]
         capture:
           stdout:
             - name: output

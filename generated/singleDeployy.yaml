@@ -1,0 +1,51 @@
+apiVersion: cloud.tibco.com/v1
+kind: TibcoTunnelRoute
+metadata:
+  name: tcp-client-vs
+  namespace: aws-compute-tibco-tenant-x
+spec:
+  selector:
+    app.kubernetes.io/name: tcp-client
+  endpoint:
+    path: /tcp-client3             
+    fqdn: datascience-tun.compute-dev.eu-west-1.tibcoapps.net
+    config: accesskey
+    configVariables:
+      ACCESS_KEY_HASH: "{PBKDF2-43}40000:Wz5DP+3WLtx3AxIqaSLeaA:sHhfA0ACzdUwqVttkK0XDHZ0uMgxyMXCGkqGueIJtFw"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-client-vs
+  namespace: aws-compute-tibco-tenant-x
+  labels:
+    app: http                         #introducing a new label-selector bcz in multiple deployment case we can't disinguish b/w the deployments and their pods if not labelled
+    app.kubernetes.io/name: tcp-client
+    app.cloud.tibco.com/owner: local
+spec:
+  selector:
+    matchLabels:
+      app: http 
+      app.kubernetes.io/name: tcp-client
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: http
+        app.kubernetes.io/name: tcp-client
+        app.cloud.tibco.com/owner: local
+        app.cloud.tibco.com/tunnel: enabled
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: container-agent
+          image: 664529841144.dkr.ecr.us-west-2.amazonaws.com/stratosphere/hybrid-server:latest #can we get this image name directly, rather to check using kctl get cm
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          resources: {}       # TODO: request actual resources here
+        - name: main
+          image: 664529841144.dkr.ecr.us-west-2.amazonaws.com/stratosphere/tcp-client:latest #can we get this image name directly
+          resources: {}       # TODO: request actual resources here
