@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-   <testsuite name="suite" tests="1" failures="0" errors="0" time="2400.856073834">
-      <properties></properties>
-      <testcase name="HybridProxyRegressionSuite" classname="tibtest" time="2400.856073834"></testcase>
-   </testsuite>
-</testsuites>

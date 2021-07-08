@@ -1,0 +1,3 @@
+time="2021-07-08 13:02:48" level=error msg="Runtime tunnel error, closing tunnels (if any) for 1 connectURL(s). Err: error discovering tunnel endpoints: supplied credentials are invalid"
+time="2021-07-08 13:02:48" level=error msg="Error stopping tunnel: tunnel client is already stopped"
+time="2021-07-08 13:02:49" level=info msg="Tunnel process ended"

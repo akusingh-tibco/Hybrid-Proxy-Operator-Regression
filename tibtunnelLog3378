@@ -1,0 +1,6 @@
+time="2021-07-08 13:02:10" level=warning msg="tibtunnel: unexpected status '404' for tunnel connectURL 'https://datascience-tun.compute-dev.eu-west-1.tibcoapps.net/tcp-client3'"
+time="2021-07-08 13:02:10" level=warning msg="tibtunnel: transient error detected, skipping autodiscovery iteration and keeping active tunnels unchanged"
+time="2021-07-08 13:02:26" level=warning msg="tibtunnel: unexpected status '404' for tunnel connectURL 'https://datascience-tun.compute-dev.eu-west-1.tibcoapps.net/tcp-client3'"
+time="2021-07-08 13:02:26" level=warning msg="tibtunnel: transient error detected, skipping autodiscovery iteration and keeping active tunnels unchanged"
+time="2021-07-08 13:02:28" level=info msg="Process received signal 'terminated', closing tunnels (if any) for 1 connectURL(s)"
+time="2021-07-08 13:02:29" level=info msg="Tunnel process ended"

@@ -1,0 +1,883 @@
+name: HybridProxyRegressionSuite
+
+env: 
+  VERSION_BUILD: version 2.3.1 (build 96)             #change this build and version if changed.
+  PROFILE_NAME: XYZZZZ                                   #can change the profile name to validate.
+  WRONGPATH: dxgdfghggfhjhgmjkjhggbc
+  WRONGENDPOINT: tcp-client7
+  SIZEinKiB: 10
+  NoOfCnctn: 3
+  NoOftimes: 5
+  NoOfItr: 3
+
+tasks: 
+
+# Sanity Covers 3499, 3415
+# Regression suite Covers 3386, 3383, 3387, 3398, 3378, 3419, 3407, 3420, 3384, 3533,
+#                         3385, 3395, 3417, 3418, 3394, 3392, 3540, 3537, 3483, 3479,
+#                         3410, 3539, 3393, 3400, 3414, 3413, 3534, 3541, 3424, 3425, 
+#                         3427, 3477, 3411, 3421, 3687.
+
+# TCC - 3383 Tibtunnel version ---- current version 2.3.1 and build 96
+  - name: TCC-3383_tibtunnelVersion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel -v"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "version"   #current version is 2.3.1 and build is 96
+# Test Execution Completion
+  - name: INFO_______________TCC-3383_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3383 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC - 3387 Tibtunnel Configure Profile (w/o name: default and with Name)
+  - name: TCC-3387_ConfigureDefaultProfile
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel configure -a ${suite.setup.secretKey_hashKey.accesskey}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "Configuration for profile 'default' was successfully saved"
+  
+  # - name: TCC-3387_ConfigureProfileWithProfileName  
+  #   type: foreground
+  #   exec:
+  #     timeout: 5s
+  #     script:
+  #       cmd: "/bin/bash"
+  #       args: ["-c", "./tibtunnel configure --profile ${PROFILE_NAME} -a ${suite.setup.secretKey_hashKey.accesskey}"]
+  #       capture:
+  #         stdout:
+  #           - name: output
+  #             match: "((?s).*)"
+  #   expect:
+  #     - name: output
+  #       operator: containsStr
+  #       value: "profile '${PROFILE_NAME}' was successfully saved"
+# AccessKeySecret Validation 
+  - name: TCC-3387_verifyAccessKeySecret_Configured
+    type: foreground
+    exec:
+      timeout: 15s
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "cat ~/.tibtunnel/credentials"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "${suite.setup.secretKey_hashKey.accesskey}" 
+# Test Execution Completion
+  - name: INFO_______________TCC-3387_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3387 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3398 -If Hybrid-Proxy-Operator is not present in the cluster, First bring them up in the cluster.
+# Check if there are Hybrid-Proxy-Operator Pod and check for status of each POD and capture name
+  - name: TCC-3398_Check_Running_HPO_Instance
+    type: foreground
+    exec: 
+      timeout: 1m
+      script: 
+        cmd: "kubectl"
+        args: ["get", "po", "-n${NAMESPACE_SYSTEM}", "-l", "app.kubernetes.io/name=hybrid-proxy", "-ojson"]
+        capture:
+          stdout:
+            - name: state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: HPO_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: state
+        operator: containsStr
+        value: "Running"
+      - name: state
+        operator: notContainsStr
+        value: "Pending"
+    repeat:
+      count: 5
+      until: success 
+      sleep: 5s
+# Test Execution Completion
+  - name: INFO_______________TCC-3398_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3398 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3378 TibTunnel_Connect_without_deploying_TibcoTunnelRoute_CR
+# Tibtunnel Connect
+  - name: TCC_3378_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog3378" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["25"]
+# Tibtunnel Validate
+  - name: TCC_3378_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog3378 | grep 'unexpected status'|grep '404' "]  
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: output
+        operator: containsStr
+        value: "unexpected status"
+# Test Execution Completion
+  - name: INFO_______________TCC-3478_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3478 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+#TCC-3419:TibcoTunnelRouteCR_deployment_without_spec.endpoint.config_tag
+# Deploy Tibcotunnelroute CR without config
+  - name: TCC3419_deployTibcoTunnelRouteCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCRWithoutConfig.yaml"
+       output: "./generated/tibcotunnelrouteCRWithoutConfig.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        # cmd: "kubectl"
+        # args: ["apply", "-f", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 1
+      - name: outerr
+        operator: containsStr
+       # value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field "config" in com.tibco.cloud.v1.TibcoTunnelRoute.spec.endpoint"
+        value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field"
+# Execution Output
+  - name: INFO_______________TCC-3419_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3419 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3407:WrongAccesHAsh CR and verify Tibtunnel
+# Deploy Tibcotunnelroute CR with Apps
+  - name: TCC3407_deployTibcoTunnelRouteCR
+    type: foreground
+    templates:
+     - input: "./resources/singleDeployWrongHash.yaml"
+       output: "./generated/singleDeployWrongHashh.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        # cmd: "kubectl"
+        # args: ["apply", "-f", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/singleDeployWrongHashh.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+# Status of Tibcotunneroute CR
+  - name: TCC-3407_tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+# Start tibtunnel 
+  - name: TCC-3407_tibtunnelConnect
+    type: foreground
+    timeout: 15s
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3407" ]
+        capture:
+          stdout:
+              - name: output
+                match: "((?s).*)"
+          stderr:
+             - name: stderr
+               match: "((?s).*)"
+    expect:
+      - name: output
+        operator: containsStr
+        value: "tunnel ended with a runtime error"     #if you open tibtunnel Log it will show supplied credentials are invalid error. 
+# Test Execution Completion
+  - name: INFO_______________TCC-3407_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3407 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3420:TibcoTunnelRouteCR_deployment_without_spec.endpoint.configAndHash
+# Deploy Tibcotunnelroute CR
+  - name: TCC3420_deployTibcoTunnelRouteCR
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCRWithoutConfig.yaml"
+       output: "./generated/tibcotunnelrouteCRWithoutConfig.yaml"
+    exec: 
+     timeout: 1m
+     script: 
+        # cmd: "kubectl"
+        # args: ["apply", "-f", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCRWithoutConfig.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 1
+      - name: outerr
+        operator: containsStr
+       # value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field "config" in com.tibco.cloud.v1.TibcoTunnelRoute.spec.endpoint"
+        value: "ValidationError(TibcoTunnelRoute.spec.endpoint): missing required field"
+# Execution Output
+  - name: INFO_______________TCC-3420_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3420 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3384:Validate_TibcoTunnelRoute_CR_Deployment_Status.yaml
+# Deploy Tibcotunnelroute CR
+  - name: TCC-3384_tibcotunnelroute-status-withFunctions
+    type: foreground
+    templates:
+     - input: "./resources/tibcotunnelrouteCR.yaml"
+       output: "./generated/tibcotunnelrouteCR.yaml"
+    exec: 
+     timeout: 2m
+     script: 
+        cmd: "${ENV.fnSh}"
+        args: ["deployResourse", "./generated/tibcotunnelrouteCR.yaml"]
+        capture:
+         stdout:
+           - name: output
+             match: "((?s).*)"
+         stderr:
+            - name: outerr
+              match: "((?s).*)"
+    expect:
+     - name: status
+       operator: equal
+       value: 0    
+# Status of Tibcotunneroute CR
+  - name: TCC-3384_tibcotunnelroute-status
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "tibcotunnelroute", "${META_DATA_NAME}", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
+        capture: 
+          stdout: 
+            - name : status_cr
+              matchType: jsonpath
+              match: "{.status.resource.state}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: status_cr
+        operator: containsStr
+        value: "processed"
+# Execution Output
+  - name: INFO_______________TCC-3384_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3384 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3533:Tibtunnel_connect_with_TibcoTunnelRoute_CR_deployment.yaml
+# Tibtunnel Connect
+  - name: TCC-3533_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 20s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${IP}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3533" ]
+#sleep command
+  - name: TCC-3533_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["60"]
+# Tibtunnel logs for PING with correct Path Validation
+  - name: TCC_3533_tibtunnelLogValidatePING
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3533 | grep -E 'PING'"]  
+        capture:
+          stdout:
+            - name: pingoutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: pingoutput
+        operator: containsStr
+        value: "PING"  
+# Tibtunnel logs for PONG with correct Path Validation
+  - name: TCC_3533_tibtunnelLogValidatePONG
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3533 | grep -E 'PONG'"]  
+        capture:
+          stdout:
+            - name: pingoutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: pingoutput
+        operator: containsStr
+        value: "PONG"  
+# Execution Output
+  - name: INFO_______________TCC-3533_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3533 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3385:Verify_Tibtunnel_connect_with_TibcoTunnelRoute_CR_and_Client-App_deployment.yaml and 
+# TCC-3395:Verify_tunnel_status_for_client_application_after_tibtunnelconnect
+# Deploy ClientAppn Deployments
+  - name: TCC-3385-3395_deployClientApp
+    type: foreground
+    templates: 
+      - input: "./resources/client-app.yaml"
+        output: "./generated/client-app.yaml"
+    exec: 
+      timeout: 2m
+      script:
+        cmd: "kubectl"
+        args: ["apply", "-f", "./generated/client-app.yaml"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+# Status of Client Applications
+  - name: TCC-3385-3395_status_of-clientAppn
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-n", "${NAMESPACE_TENANT}", "-o", "json", "--selector=app=http"]
+        capture:
+          stdout:
+            - name: running_state
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+            - name: capture_pod_name
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: running_state
+        operator: contains
+        value: "Running"
+      - name: running_state
+        operator: notContains
+        value: "Pending"
+    repeat:
+      count: 6
+      until: success
+      sleep: 5s  
+# Tibtunnel Connect
+  - name: TCC-3385-3395_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s 8080:localhost:8080 https://${FQDN}/${ENDPOINT} -l $PWD/tibtunnelLog-3385" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+
+# Tibtunnel logs for PING/PONG
+# Tibtunnel logs for PING with correct Path Validation
+  - name: TCC_3385-3395_tibtunnelLogValidatePING
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3385 | grep -E 'PING'"]  
+        capture:
+          stdout:
+            - name: pingoutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: pingoutput
+        operator: containsStr
+        value: "PING"  
+# Tibtunnel logs for PONG with correct Path Validation
+  - name: TCC_3385-3395_tibtunnelLogValidatePONG
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3385 | grep -E 'PONG'"]  
+        capture:
+          stdout:
+            - name: pingoutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: pingoutput
+        operator: containsStr
+        value: "PONG"  
+  - name: sleepCommand
+    type: foreground
+    exec:
+     script:
+        cmd: "sleep"
+        args: ["5"]
+  # - name: tibtunnelLogValidate
+  #   type: foreground
+  #   exec:
+  #     script:
+  #       cmd: "/bin/bash"
+  #       args: ["-c", "cat $PWD/tibtunnelLog-3385 | grep -E ') PING|) PONG'"]   
+  #       capture:
+  #         stdout:
+  #           - name: output
+  #             match: "((?s).*)"
+  #   expect:
+  #     - name: output
+  #       operator: containsStr
+  #       value: "PING"
+  #     - name: output
+  #       operator: containsStr
+  #       value: "PONG"
+  #   repeat:
+  #     count: 6
+  #     until: success
+  #     sleep: 5s
+  # - name: sleepCommand
+  #   type: foreground
+  #   exec:
+  #     script:
+  #       cmd: "sleep"
+  #       args: ["5"]
+# Tunnel Status b/w tibtunnel and Client App 
+  - name: TCC-3385-3395_checkTunnelStatus
+    type: foreground
+    exec:
+      script:
+        cmd: "kubectl"
+        args: ["exec", "${TCC-3385-3395_status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
+        capture:
+          stdout: 
+            - name: output
+              match: "((?s).*)"          
+    expect:
+      - name: output
+        operator: containsStr
+        value: "\"isConnected\":true"
+      - name: output
+        operator: notContainsStr
+        value: "false"
+      - name: output
+        operator: containsStr
+        value: "Tunnel is connected"
+# sleep
+  - name: TCC-3385-3395_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+# Execution Output
+  - name: INFO_______________TCC-3385--and--TCC-3395_____testcasecompletion
+    type: foreground
+    exec:
+      timeout: 2s
+      script:
+        cmd: "echo"
+        args: ["TCC-3385 and TCC-3395 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3417
+# HPO Pod name
+  - name: TCC_3417_HPOPodName
+    type: foreground
+    exec: 
+      timeout: 30s
+      script: 
+        cmd: "kubectl"
+        args: ["get", "pods", "-l", "app.kubernetes.io/name=hybrid-proxy","-n", "${who}-tibco-system", "-ojson"]
+        #kubectl get pods -l app.kubernetes.io/name=hybrid-proxy -n aws-compute-tibco-system
+        capture: 
+          stdout: 
+            - name : HPOPodName
+              matchType: jsonpath
+              match: "{.items[0].metadata.name}"
+            - name: HPOState
+              matchType: jsonpath
+              match: "{.items[*].status.phase}"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: HPOPodName
+        operator: containsStr
+        value: "hybrid-proxy"
+      # - name: HPOState
+      #   operator: containsStr
+      #   value: "Running"
+# Tibtunnel Connect
+  - name: TCC-3417_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3417" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["15"]
+# Scaling up client applications 
+  - name: TCC-3417_scaleUp_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=3","hybrid-proxy","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+
+  - name: TCC-3417_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["20"]
+# Tibtunnel logs for closing tunnel (WS connection)
+  - name: TCC-3417_tibtunnelLogValidate
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3417 | grep 'closing tunnel (WS connection)' "]  
+        capture:
+          stdout:
+            - name: closeTunnelOutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 1
+      - name: closeTunnelOutput
+        operator: notContainsStr
+        value: "closing tunnel (WS connection)"
+  
+# Tibtunnel Validation for new connection count
+  - name: TCC-3417_tibtunnelLogValidateNoOfConnections
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3417 | grep -c 'tunnel created (WS connection)' "]  
+        capture:
+          stdout:
+            - name: TunnelCreationOutputCount
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: TunnelCreationOutputCount
+        operator: containsStr
+        value: "1"
+  - name: TCC-3417_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["40"]
+# Test Execution Completion
+  - name: INFO_______________TCC-3417_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3417 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# TCC-3418
+# Tibtunnel Connect
+  - name: TCC-3417_tibtunnelConnect
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 300s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog-3418" ]
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["10"]
+# Delete the captured HPO Pod 
+  - name: TCC-3418_delete_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["delete", "pod", "${TCC_3417_HPOPodName.HPOPodName}","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+  - name: TCC-3418_sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["320"]
+# Tibtunnel Validation closing tunnel (WS connection)
+  - name: TCC-3418_tibtunnelLogValidateCloseTunnel
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3418 | grep 'closing tunnel (WS connection)' "]  
+        capture:
+          stdout:
+            - name: closeTunnelOutput
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: closeTunnelOutput
+        operator: containsStr
+        value: "closing tunnel (WS connection)"
+# Tibtunnel logs for new connection count
+  - name: TCC-3418_tibtunnelLogValidateNoOfConnections
+    type: foreground
+    exec:
+      script:
+        cmd: "/bin/bash"
+       # args: ["-c", "awk '/PING/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395 &&  '/PONG/{print}' /Users/sugandhi/Desktop/GITRepository/Regression/Hybrid-Proxy-Operator-Regression/tibtunnelLog-3395"] 
+        args: ["-c", "cat $PWD/tibtunnelLog-3418 | grep -c 'tunnel created (WS connection)' "]  
+        capture:
+          stdout:
+            - name: TunnelCreationOutputCount
+              match: "((?s).*)"
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+      - name: TunnelCreationOutputCount
+        operator: containsStr
+        value: "2"
+# Bring back HPO instance to Default
+  - name: TCC-3417_scaleDownToOne_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=1","hybrid-proxy","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 
+# Test Execution Completion
+  - name: INFO_______________TCC-3418_____testcaseExecutionCompletion
+    type: foreground
+    exec:
+      timeout: 5s
+      script:
+        cmd: "echo"
+        args: ["TCC-3418 Executed Successfully"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0
+
+# Bring back HPO instance to Default
+  - name: TCC-3417_scaleDownToOne_HPO
+    type: foreground
+    timeout: 1m
+    exec:
+      script: 
+        cmd: "kubectl"
+        args: ["scale", "deploy", "--replicas=1","hybrid-proxy","-n", "${who}-tibco-system"]
+    expect:
+      - name: status
+        operator: equal
+        value: 0 

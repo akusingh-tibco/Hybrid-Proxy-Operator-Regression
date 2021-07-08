@@ -11,4 +11,4 @@ spec:
     fqdn: datascience-tun.compute-dev.eu-west-1.tibcoapps.net
     #config: accesskey
     configVariables:
-      ACCESS_KEY_HASH: "{PBKDF2-43}40000:Wz5DP+3WLtx3AxIqaSLeaA:sHhfA0ACzdUwqVttkK0XDHZ0uMgxyMXCGkqGueIJtFw"
+      ACCESS_KEY_HASH: "{PBKDF2-43}40000:vPFi88mPVgmtvethw6P+hQ:GSLtFclx2gKyNNA1SmAy/KJa0UPgJM5gqCxEzajMxZM"
