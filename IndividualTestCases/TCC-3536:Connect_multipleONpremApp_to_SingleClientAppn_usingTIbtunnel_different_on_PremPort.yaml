@@ -1,14 +1,9 @@
-name: TCC-3477_DataTransfer_with_SequentialData_withDIFF_Connection
-
-#here the data transferred will be noOfConnctn*1Kib.
-
-env:
-  NoOfCnctn: 3
+name: TCC-3536_Connect_multiONpremApp_to_SingleClientAppn_usingTIbtunnel_different_on_PremPort
 
 tasks: 
 
 # Deploy Tibcotunnelroute CR
-  - name: TCC-3477_deployCR
+  - name: TCC-3536_deployCR
     type: foreground
     templates:
      - input: "./resources/tibcotunnelrouteCR.yaml"
@@ -31,7 +26,7 @@ tasks:
        value: 0
 
 # Status of Tibcotunneroute CR
-  - name: TCC-3477_tibcotunnelroute-status
+  - name: TCC-3536_tibcotunnelroute-status
     type: foreground
     exec: 
       timeout: 30s
@@ -52,7 +47,7 @@ tasks:
         value: "processed"
 
 # Deploy ClientAppn Deployments
-  - name: TCC-3477_deployClientApp
+  - name: TCC-3536_deployClientApp
     type: foreground
     templates: 
       - input: "./resources/client-app.yaml"
@@ -68,7 +63,7 @@ tasks:
         value: 0
 
 # tibtunnel configuration
-  - name: TCC-3477_tibTunnelConfigure
+  - name: TCC-3536_tibTunnelConfigure
     type: foreground
     exec:
       timeout: 5s
@@ -85,7 +80,7 @@ tasks:
         value: "'default' was successfully saved"
 
 # Status of Client Applications
-  - name: TCC-3477_status_of-clientAppn
+  - name: TCC-3536_status_of-clientAppn
     type: foreground
     timeout: 1m
     exec:
@@ -116,21 +111,21 @@ tasks:
       sleep: 20s  
 
 # Tibtunnel Connect
-  - name: TCC-3477_tibtunnelConnect
+  - name: TCC-3536_tibtunnelConnect
     type: background
     exec:
       script:
         cmd: "/bin/bash"
-        args: ["-c", "timeout 60s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
+        args: ["-c", "timeout 120s ./tibtunnel connect -d --remote-debug -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT} -s ${CONTAINER_PORT}:${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2}  https://${FQDN}/${ENDPOINT} -l ./tibtunnelLog" ]
 
 # Tunnel Status b/w tibtunnel and Client App 
-  - name: TCC-3477_checkTunnelStatus
+  - name: TCC-3536_checkTunnelStatus
     type: foreground
     timeout: 30s
     exec:
       script:
         cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${TCC-3477_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        args: ["checkTunnelStatus","${TCC-3536_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
         capture:
           stdout: 
             - name: output
@@ -150,8 +145,8 @@ tasks:
       until: success
       sleep: 13s  
 
-# Start On-Prem Appn
-  - name: TCC-3477_startOnpremAppn
+# Start On-Prem Appn 1
+  - name: TCC-3536_startOnpremAppn1
     type: background
     exec:
       script:
@@ -169,37 +164,14 @@ tasks:
         operator: containsStr
         value: "TCP server started"
 
-
-# # Communication b/w ClientPod and On-Prem Appn by sending Data
-#   - name: TCC-3477_sendData
-#     type: foreground
-#     exec:
-#       timeout: 30s
-#       script:
-#         cmd: "${ENV.fnSh}"
-#         args: ["dataTransferNoOfConnctn", "${TCC-3424_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}", "${NoOfCnctn}" ]
-#         capture:
-#           stdout:
-#             - name: output
-#               match: "((?s).*)"
-#           stderr:
-#             - name: stderr        #isme stederr 1 hi line pick kr rha hai
-#               match: "((?s).*)"    
-#     expect:
-#       - name: stderr
-#         operator: containsStr
-#         value: "Successfully send/received ${NoOfCnctn}.0KiB" 
-#       # - name: stderr
-#       #   operator: contains
-#       #   value: "[${NoOfCnctn}] Normal close of remote connection" 
-
 # Communication b/w ClientPod and On-Prem Appn by sending Data
-  - name: TCC_3477_sendData
+  - name: TCC-3536_sendData1
     type: foreground
     exec:
+      timeout: 30s
       script:
-        cmd: "kubectl"
-        args: ["exec", "${TCC-3477_status_of-clientAppn.capture_pod_name}", "-n$${NAMESPACE_TENANT}","-c","main", "--", "/test/tcp-client", "-d", "-a", "localhost:8081", "-n", "3"]
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3536_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${ONPREMISE_PORT}"]
         capture:
           stdout:
             - name: output
@@ -210,27 +182,73 @@ tasks:
     expect:
       - name: stderr
         operator: containsStr
-        value: "Successfully send/received 3.0KiB"
-      - name: stderr
-        operator: containsStr
-        value: "[id:3] Tx/Rx 1.0KiB in"
-      - name: stderr
-        operator: containsStr
-        value: "worker(1): complete"
+        value: "Successfully send/received 1.0KiB"
     repeat:
-      count: 0
-      sleep: 5s
+      count: 3
+      until: success
+      sleep: 2s
+ 
   - name: sleepCommand
     type: foreground
     exec:
       script:
         cmd: "sleep"
-        args: ["70"]
+        args: ["40"]
+
+# Start On-Prem Appn 2
+  - name: TCC-3536_startOnpremAppn2
+    type: background
+    exec:
+      script:
+        cmd: "/bin/bash"
+        args: ["-c", "timeout 30s ./tcp-server -d -a ${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2} >> ./tcpserverLog"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "TCP server started"
+
+# Communication b/w ClientPod and On-Prem Appn by sending Data 2
+  - name: TCC-3536_sendData2
+    type: foreground
+    exec:
+      timeout: 30s
+      script:
+        cmd: "${ENV.fnSh}"
+        args: ["dataTransferToOnpremApp", "${TCC-3536_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${ONPREMISE_PORT2}"]
+        capture:
+          stdout:
+            - name: output
+              match: "((?s).*)"
+          stderr:
+            - name: stderr
+              match: "((?s).*)"              
+    expect:
+      - name: stderr
+        operator: containsStr
+        value: "Successfully send/received 1.0KiB"
+    repeat:
+      count: 3
+      until: success
+      sleep: 2s
+
+  - name: sleepCommand
+    type: foreground
+    exec:
+      script:
+        cmd: "sleep"
+        args: ["80"]
 
 teardown: 
 
 # Delete the Tibcotunneroute CR
-  - name: TCC-3477_delete_yaml_file
+  - name: TCC-3536_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -243,7 +261,7 @@ teardown:
         value: 0
 
 # Delete the ClientApp Deployments
-  - name: TCC-3477_delete_yaml_file
+  - name: TCC-3536_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -258,78 +276,3 @@ teardown:
       count: 3
       until: success
       sleep: 10ms
-
-# Verify Tibcotunneroute CR Deletion
-  - name: TCC-3477_confirm_deletionCR
-    type: foreground
-    exec: 
-      timeout: 1m
-      script: 
-        #cmd: "kubectl"
-        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        cmd: "${ENV.fnSh}"
-        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
-        capture:
-          stdout: 
-            - name: confirm_deleteCR
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_deleteCR
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-
-# Verify ClientApp Deployments deletion
-  - name: TCC-3477_confirm_deletionA
-    type: foreground
-    timeout: 1m
-    exec: 
-      script: 
-        #cmd: "kubectl"
-        #args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        cmd: "${ENV.fnSh}"
-        args: ["getResources", "deploy", "${NAMESPACE_TENANT}"]
-        capture:
-          stdout: 
-            - name: confirm_deleteA
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_deleteA
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-    repeat:
-      count: 5
-      until: success
-      sleep: 10s 
-
-# Verify client-pod deletion
-  - name: TCC-3477_confirm_client-pod_deletee
-    type: foreground
-    timeout: 1m
-    exec: 
-      script: 
-        cmd: "kubectl"
-        args: ["get", "po", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        capture:
-          stdout: 
-            - name: confirm_client-podd
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_client-podd
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-    repeat:
-      count: 12
-      until: success
-      sleep: 5s  

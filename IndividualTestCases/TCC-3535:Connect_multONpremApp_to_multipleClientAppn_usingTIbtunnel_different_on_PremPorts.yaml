@@ -1,9 +1,9 @@
-name: Sanity_SingleDeploymentwithDataTransfer_With
+name: TCC-3535_Connect_multONpremApp_to_multipleClientAppn_usingTIbtunnel_different_on_PremPort
 
 tasks: 
 
 # Deploy Tibcotunnelroute CR
-  - name: deployCR
+  - name: TCC-3535_deployCR
     type: foreground
     templates:
      - input: "./resources/tibcotunnelrouteCR.yaml"
@@ -26,7 +26,7 @@ tasks:
        value: 0
 
 # Status of Tibcotunneroute CR
-  - name: tibcotunnelroute-status
+  - name: TCC-3535_tibcotunnelroute-status
     type: foreground
     exec: 
       timeout: 30s
@@ -47,7 +47,7 @@ tasks:
         value: "processed"
 
 # Deploy ClientAppn Deployments
-  - name: deployClientApp
+  - name: TCC-3535_deployClientApp
     type: foreground
     templates: 
       - input: "./resources/client-app.yaml"
@@ -63,7 +63,7 @@ tasks:
         value: 0
 
 # tibtunnel configuration
-  - name: TCC-3421_tibTunnelConfigure
+  - name: TCC-3535_tibTunnelConfigure
     type: foreground
     exec:
       timeout: 5s
@@ -80,7 +80,7 @@ tasks:
         value: "'default' was successfully saved"
 
 # Status of Client Applications
-  - name: status_of-clientAppn
+  - name: TCC-3535_status_of-clientAppn
     type: foreground
     timeout: 1m
     exec:
@@ -111,7 +111,7 @@ tasks:
       sleep: 20s  
 
 # Tibtunnel Connect
-  - name: tibtunnelConnect
+  - name: TCC-3535_tibtunnelConnect
     type: background
     exec:
       script:
@@ -127,7 +127,7 @@ tasks:
         #cmd: "kubectl"
         #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "curl", "-s", "localhost:7778/v1/tunnel/status"]
         cmd: "${ENV.fnSh}"
-        args: ["checkTunnelStatus","${status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
+        args: ["checkTunnelStatus","${TCC-3535_status_of-clientAppn.capture_pod_name}","${NAMESPACE_TENANT}"]
         capture:
           stdout: 
             - name: output
@@ -173,7 +173,7 @@ tasks:
       timeout: 30s
       script:
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}"]
+        args: ["dataTransferToOnpremApp", "${TCC-3535_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME}:${CONTAINER_PORT}"]
         capture:
           stdout:
             - name: output
@@ -225,7 +225,7 @@ tasks:
         #cmd: "kubectl"
         #args: ["exec", "${status_of-clientAppn.capture_pod_name}", "-n${NAMESPACE_TENANT}", "-c", "main", "--", "/test/tcp-client", "-a", "${ONPREMISE_IP}:${ONPREMISE_PORT}"]
         cmd: "${ENV.fnSh}"
-        args: ["dataTransferToOnpremApp", "${status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${CONTAINER_PORT}"]
+        args: ["dataTransferToOnpremApp", "${TCC-3535_status_of-clientAppn.capture_pod_name}", "${NAMESPACE_TENANT}", "${ONPREMISE_HOSTNAME2}:${CONTAINER_PORT}"]
         capture:
           stdout:
             - name: output
@@ -252,7 +252,7 @@ tasks:
 teardown: 
 
 # Delete the Tibcotunneroute CR
-  - name: delete_yaml_file
+  - name: TCC-3535_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -265,7 +265,7 @@ teardown:
         value: 0
 
 # Delete the ClientApp Deployments
-  - name: delete_yaml_file
+  - name: TCC-3535_delete_yaml_file
     type: foreground
     exec: 
       timeout: 1m
@@ -280,78 +280,3 @@ teardown:
       count: 3
       until: success
       sleep: 10ms
-
-# Verify Tibcotunneroute CR Deletion
-  - name: confirm_deletionCR
-    type: foreground
-    exec: 
-      timeout: 1m
-      script: 
-        #cmd: "kubectl"
-        #args: ["get", "tibcotunnelroute", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        cmd: "${ENV.fnSh}"
-        args: ["getResources", "tibcotunnelroute", "${NAMESPACE_TENANT}"]
-        capture:
-          stdout: 
-            - name: confirm_deleteCR
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_deleteCR
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-
-# Verify ClientApp Deployments deletion
-  - name: confirm_deletionA
-    type: foreground
-    timeout: 1m
-    exec: 
-      script: 
-        #cmd: "kubectl"
-        #args: ["get", "deploy", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        cmd: "${ENV.fnSh}"
-        args: ["getResources", "deploy", "${NAMESPACE_TENANT}"]
-        capture:
-          stdout: 
-            - name: confirm_deleteA
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_deleteA
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-    repeat:
-      count: 5
-      until: success
-      sleep: 10s 
-
-# Verify client-pod deletion
-  - name: confirm_client-pod_deletee
-    type: foreground
-    timeout: 1m
-    exec: 
-      script: 
-        cmd: "kubectl"
-        args: ["get", "po", "-n", "${NAMESPACE_TENANT}", "-o", "json"]
-        capture:
-          stdout: 
-            - name: confirm_client-podd
-              matchType: jsonpath
-              match: "{.items[*].metadata.name}"
-    expect:
-      - name: status
-        operator: equal
-        value: 0
-      - name: confirm_client-podd
-        operator: notContainsStr
-        value: "${META_DATA_NAME}"
-    repeat:
-      count: 12
-      until: success
-      sleep: 5s  
